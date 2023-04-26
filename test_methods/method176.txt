@@ -1,0 +1,15 @@
+[[[// Atomically replace newVal for oldVal, returning the value that existed
+// there before.  If oldVal is the returned value, then newVal was inserted,
+// otherwise not.  A null oldVal means the key does not exist (only insert if
+// missing); a null newVal means to remove the key.
+@SuppressWarnings("unchecked")
+public final TypeV putIfMatchAllowNull(Object key, Object newVal, Object oldVal) {
+    if (oldVal == null)
+        oldVal = TOMBSTONE;
+    if (newVal == null)
+        newVal = TOMBSTONE;
+    final TypeV res = (TypeV) putIfMatch(this, _kvs, key, newVal, oldVal);
+    assert !(res instanceof Prime);
+    // assert res != null;
+    return res == TOMBSTONE ? null : res;
+}]]],

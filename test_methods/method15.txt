@@ -1,0 +1,17 @@
+[[[/**
+ * Get the gid bit contribution in the bucket id, shifted to the correct
+ * position in the id.
+ *
+ * @param gid The gid we need to calculate contribution from.
+ * @return A mask to or with the bucket id to get the bit set.
+ */
+private long getGidContribution(byte[] gid) {
+    long gidbits = 0;
+    for (int i = 4; i < 12; ++i) {
+        gidbits <<= 8;
+        long tall = gid[15 - i] & 0xFFl;
+        assert (tall >= 0 && tall <= 255);
+        gidbits |= tall;
+    }
+    return gidbits & gidMask;
+}]]],

@@ -1,0 +1,5 @@
+[[[private static void assertNotNull(Object... objects) {
+    for (Object o : objects) {
+        assert (o != null);
+    }
+}]]],

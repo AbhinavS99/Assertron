@@ -1,0 +1,31 @@
+[[[@Override
+public void run() {
+    synchronized (progress.getToken()) {
+        // Decrement pending replies inside same lock as sender task to ensure that if the sender
+        // observes a non-zero number of reply tasks, it's guaranteed that this actually means a
+        // task _will_ be run later at some point.
+        decrementScheduleHandleReplyTasks();
+        try {
+            assert (pendingMessageCount > 0);
+            --pendingMessageCount;
+            if (reply.hasErrors()) {
+                handleErrorReply(reply);
+            } else if (reply instanceof CreateVisitorReply) {
+                handleCreateVisitorReply((CreateVisitorReply) reply);
+            } else {
+                String msg = "Received reply we do not know how to handle: " + reply.getClass().getName();
+                log.log(Level.SEVERE, msg);
+                transitionTo(new StateDescription(State.FAILED, msg));
+            }
+        } catch (Exception e) {
+            String msg = "Got exception of type " + e.getClass().getName() + " with message '" + e.getMessage() + "' while processing reply in visitor session";
+            log.log(Level.WARNING, msg, e);
+            transitionTo(new StateDescription(State.FAILED, msg));
+        } catch (Throwable t) {
+            // We can't reliably handle this; take a nosedive
+            com.yahoo.protect.Process.logAndDie("Caught unhandled error when running reply task", t);
+        } finally {
+            continueVisiting();
+        }
+    }
+}]]],

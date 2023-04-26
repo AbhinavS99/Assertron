@@ -1,0 +1,4 @@
+[[[void resolveReferenced(ParsedDocument parsed) {
+    var old = resolvedReferences.put(parsed.name(), parsed);
+    assert (old == null || old == parsed);
+}]]],

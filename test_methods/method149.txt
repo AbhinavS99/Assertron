@@ -1,0 +1,17 @@
+[[[/**
+ * 获取RowData中 field's index
+ *
+ * @param value ROwData
+ * @return index集
+ */
+default List<String> getFields(RowData value) {
+    List<String> fields = new ArrayList<>(value.getArity());
+    String[] headers = ((ColumnRowData) value).getHeaders();
+    assert headers != null;
+    for (String header : headers) {
+        if (!META_HEADER.contains(header)) {
+            fields.add(header);
+        }
+    }
+    return fields;
+}]]],

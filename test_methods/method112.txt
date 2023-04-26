@@ -1,0 +1,18 @@
+[[[private static List<URL> doGetURLs(final String path) {
+    File jarPath = new File(path);
+    Validate.isTrue(jarPath.exists() && jarPath.isDirectory(), "jar包路径必须存在且为目录.");
+    /* set filter */
+    FileFilter jarFilter = pathname -> pathname.getName().endsWith(".jar");
+    /* iterate all jar */
+    File[] allJars = new File(path).listFiles(jarFilter);
+    assert allJars != null;
+    List<URL> jarURLs = new ArrayList<>(allJars.length);
+    for (File allJar : allJars) {
+        try {
+            jarURLs.add(allJar.toURI().toURL());
+        } catch (Exception e) {
+            // Ignore
+        }
+    }
+    return jarURLs;
+}]]],

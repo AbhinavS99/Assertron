@@ -1,0 +1,23 @@
+[[[@Override
+public void call(int level, BytePointer msg) {
+    switch(level) {
+        case AV_LOG_PANIC:
+        case AV_LOG_FATAL:
+        case AV_LOG_ERROR:
+            logger.error(msg.getString());
+            break;
+        case AV_LOG_WARNING:
+            logger.warn(msg.getString());
+            break;
+        case AV_LOG_INFO:
+            logger.info(msg.getString());
+            break;
+        case AV_LOG_VERBOSE:
+        case AV_LOG_DEBUG:
+        case AV_LOG_TRACE:
+            logger.debug(msg.getString());
+            break;
+        default:
+            assert false;
+    }
+}]]],

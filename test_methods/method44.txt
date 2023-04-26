@@ -1,0 +1,54 @@
+[[[/**
+ * This is called to attempt the next task against ZooKeeper we want to try.
+ *
+ * @return true if we did or attempted any work.
+ */
+public boolean doNextZooKeeperTask(DatabaseContext databaseContext) {
+    boolean didWork = false;
+    synchronized (monitor) {
+        if (lostZooKeeperConnectionEvent) {
+            fleetControllerContext.log(logger, Level.FINE, () -> "doNextZooKeeperTask(): lost connection");
+            databaseContext.getFleetController().lostDatabaseConnection();
+            lostZooKeeperConnectionEvent = false;
+            didWork = true;
+            if (masterDataEvent != null) {
+                fleetControllerContext.log(logger, Level.FINE, () -> "Had new master data queued on disconnect. Removing master data event");
+                masterDataEvent = null;
+            }
+        }
+        if (masterDataEvent != null) {
+            fleetControllerContext.log(logger, Level.FINE, () -> "doNextZooKeeperTask(): new master data");
+            if (!masterDataEvent.containsKey(fleetControllerContext.id().index())) {
+                Integer currentVote = (pendingStore.masterVote != null ? pendingStore.masterVote : currentlyStored.masterVote);
+                assert (currentVote != null);
+                masterDataEvent.put(fleetControllerContext.id().index(), currentVote);
+            }
+            databaseContext.getFleetController().handleFleetData(masterDataEvent);
+            masterDataEvent = null;
+            didWork = true;
+        }
+    }
+    if (isDatabaseClosedSafe() && zooKeeperIsConfigured()) {
+        long currentTime = timer.getCurrentTimeInMillis();
+        if (currentTime - lastZooKeeperConnectionAttempt < minimumWaitBetweenFailedConnectionAttempts) {
+            // Not time to attempt connection yet.
+            return false;
+        }
+        didWork = true;
+        connect(currentTime);
+    }
+    try {
+        synchronized (databaseMonitor) {
+            if (database == null || database.isClosed()) {
+                return didWork;
+            }
+            didWork |= performZooKeeperWrites();
+        }
+    } catch (CasWriteFailed e) {
+        fleetControllerContext.log(logger, Level.WARNING, String.format("CaS write to ZooKeeper failed, another controller " + "has likely taken over ownership: %s", e.getMessage()));
+        // Clear DB and master election state. This shall trigger a full re-fetch of all
+        // version and election-related metadata.
+        relinquishDatabaseConnectivity(databaseContext);
+    }
+    return didWork;
+}]]],

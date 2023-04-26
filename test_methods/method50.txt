@@ -1,0 +1,8 @@
+[[[public Discriminator build() {
+    assert discriminator.resultMapping != null;
+    assert discriminator.discriminatorMap != null;
+    assert !discriminator.discriminatorMap.isEmpty();
+    // lock down map
+    discriminator.discriminatorMap = Collections.unmodifiableMap(discriminator.discriminatorMap);
+    return discriminator;
+}]]],

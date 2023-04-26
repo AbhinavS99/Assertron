@@ -1,0 +1,17 @@
+[[[/**
+ * Does not null out the first element of `next`, callers must do that
+ */
+final void moveToNextConsumerChunk(R cChunk, R next) {
+    // avoid GC nepotism
+    cChunk.soNext(null);
+    next.soPrev(null);
+    // no need to cChunk.soIndex(NOT_USED)
+    if (cChunk.isPooled()) {
+        final boolean pooled = freeChunksPool.offer(cChunk);
+        assert pooled;
+    }
+    this.soConsumerChunk(next);
+    // MC case:
+    // from now on the code is not single-threaded anymore and
+    // other consumers can move forward consumerIndex
+}]]],

@@ -1,0 +1,22 @@
+[[[Cursor decodeValue(Inserter inserter, Type type, int meta) {
+    switch(type) {
+        case NIX:
+            return decodeNIX(inserter);
+        case BOOL:
+            return decodeBOOL(inserter, meta);
+        case LONG:
+            return decodeLONG(inserter, meta);
+        case DOUBLE:
+            return decodeDOUBLE(inserter, meta);
+        case STRING:
+            return decodeSTRING(inserter, meta);
+        case DATA:
+            return decodeDATA(inserter, meta);
+        case ARRAY:
+            return decodeARRAY(inserter, meta);
+        case OBJECT:
+            return decodeOBJECT(inserter, meta);
+    }
+    assert false : "should not be reached";
+    return null;
+}]]],

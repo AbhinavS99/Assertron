@@ -1,0 +1,7 @@
+[[[void createComplexTypes() {
+    var toCreate = new ArrayList<>(factoryByIdx.keySet());
+    for (var dataTypeId : toCreate) {
+        var type = getOrCreateType(dataTypeId);
+        assert (type != null);
+    }
+}]]],

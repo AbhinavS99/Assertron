@@ -1,0 +1,23 @@
+[[[private RowData convertToRow(Result result, GenericRowData resultRow, GenericRowData[] familyRows) {
+    for (int i = 0; i < fieldLength; i++) {
+        if (rowkeyIndex == i) {
+            assert keyDecoder != null;
+            Object rowkey = keyDecoder.decode(result.getRow());
+            resultRow.setField(rowkeyIndex, rowkey);
+        } else {
+            int f = (rowkeyIndex != -1 && i > rowkeyIndex) ? i - 1 : i;
+            // get family key
+            byte[] familyKey = families[f];
+            GenericRowData familyRow = familyRows[f];
+            for (int q = 0; q < this.qualifiers[f].length; q++) {
+                // get quantifier key
+                byte[] qualifier = qualifiers[f][q];
+                // read value
+                byte[] value = result.getValue(familyKey, qualifier);
+                familyRow.setField(q, qualifierDecoders[f][q].decode(value));
+            }
+            resultRow.setField(i, familyRow);
+        }
+    }
+    return resultRow;
+}]]],

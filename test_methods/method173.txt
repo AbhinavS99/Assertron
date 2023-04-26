@@ -1,0 +1,14 @@
+[[[/**
+ * send an intent to context
+ * @param action to associate to the intent
+ * @param extraKey key of te extra value ( no extra if this parameter is null )
+ * @param extraValue value of the extra
+ */
+protected void sendIntent(String action, String extraKey, Serializable extraValue) {
+    assert context != null;
+    Intent intent = new Intent(action);
+    if (extraKey != null) {
+        intent.putExtra(extraKey, extraValue);
+    }
+    context.sendBroadcast(intent);
+}]]],

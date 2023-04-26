@@ -1,0 +1,30 @@
+[[[public static void applyGamma(Buffer buffer, int depth, int stride, double gamma) {
+    if (gamma == 1.0) {
+        return;
+    }
+    switch(depth) {
+        case Frame.DEPTH_UBYTE:
+            flipCopyWithGamma(((ByteBuffer) buffer).asReadOnlyBuffer(), 0, stride, (ByteBuffer) buffer, 0, stride, false, gamma, false, 0);
+            break;
+        case Frame.DEPTH_BYTE:
+            flipCopyWithGamma(((ByteBuffer) buffer).asReadOnlyBuffer(), 0, stride, (ByteBuffer) buffer, 0, stride, true, gamma, false, 0);
+            break;
+        case Frame.DEPTH_USHORT:
+            flipCopyWithGamma(((ShortBuffer) buffer).asReadOnlyBuffer(), 0, stride, (ShortBuffer) buffer, 0, stride, false, gamma, false, 0);
+            break;
+        case Frame.DEPTH_SHORT:
+            flipCopyWithGamma(((ShortBuffer) buffer).asReadOnlyBuffer(), 0, stride, (ShortBuffer) buffer, 0, stride, true, gamma, false, 0);
+            break;
+        case Frame.DEPTH_INT:
+            flipCopyWithGamma(((IntBuffer) buffer).asReadOnlyBuffer(), 0, stride, (IntBuffer) buffer, 0, stride, gamma, false, 0);
+            break;
+        case Frame.DEPTH_FLOAT:
+            flipCopyWithGamma(((FloatBuffer) buffer).asReadOnlyBuffer(), 0, stride, (FloatBuffer) buffer, 0, stride, gamma, false, 0);
+            break;
+        case Frame.DEPTH_DOUBLE:
+            flipCopyWithGamma(((DoubleBuffer) buffer).asReadOnlyBuffer(), 0, stride, (DoubleBuffer) buffer, 0, stride, gamma, false, 0);
+            break;
+        default:
+            assert false;
+    }
+}]]],

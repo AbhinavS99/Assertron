@@ -1,0 +1,38 @@
+[[[public IplImage grabDepth() throws Exception {
+    // default bpp == 0 == FREENECT_DEPTH_11BIT
+    int fmt = depthFormat < 0 ? bpp : depthFormat;
+    int iplDepth = IPL_DEPTH_16U, channels = 1;
+    switch(fmt) {
+        case FREENECT_DEPTH_11BIT:
+        case FREENECT_DEPTH_REGISTERED:
+        case FREENECT_DEPTH_MM:
+        case FREENECT_DEPTH_10BIT:
+            iplDepth = IPL_DEPTH_16U;
+            channels = 1;
+            break;
+        case FREENECT_DEPTH_11BIT_PACKED:
+        case FREENECT_DEPTH_10BIT_PACKED:
+        default:
+            assert false;
+    }
+    int err = freenect_sync_get_depth(rawDepthImageData, timestamp, deviceNumber, fmt);
+    if (err != 0) {
+        throw new Exception("freenect_sync_get_depth() Error " + err + ": Failed to get depth synchronously.");
+    }
+    // how to get the resolution ??
+    int w = 640, h = 480;
+    if (rawDepthImage == null || rawDepthImage.width() != w || rawDepthImage.height() != h) {
+        rawDepthImage = IplImage.createHeader(w, h, iplDepth, channels);
+    }
+    cvSetData(rawDepthImage, rawDepthImageData, w * channels * iplDepth / 8);
+    if (iplDepth > 8 && !ByteOrder.nativeOrder().equals(byteOrder)) {
+        // ack, the camera's endianness doesn't correspond to our machine ...
+        // swap bytes of 16-bit images
+        ByteBuffer bb = rawDepthImage.getByteBuffer();
+        ShortBuffer in = bb.order(ByteOrder.BIG_ENDIAN).asShortBuffer();
+        ShortBuffer out = bb.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
+        out.put(in);
+    }
+    super.timestamp = timestamp[0];
+    return rawDepthImage;
+}]]],

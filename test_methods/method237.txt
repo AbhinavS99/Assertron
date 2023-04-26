@@ -1,0 +1,7 @@
+[[[private static int linearSearch(int[] a, int low, int high, int key) {
+    assert low < high;
+    while (low < high && a[low] <= key) {
+        ++low;
+    }
+    return low;
+}]]],

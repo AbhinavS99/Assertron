@@ -1,0 +1,30 @@
+[[[@Override
+public boolean fill(final CharacterBuffer buffer, final Reader reader, int numChars) throws IOException {
+    assert buffer.buffer.length >= 2;
+    if (numChars < 2 || numChars > buffer.buffer.length) {
+        throw new IllegalArgumentException("numChars must be >= 2 and <= the buffer size");
+    }
+    final char[] charBuffer = buffer.buffer;
+    buffer.offset = 0;
+    final int offset;
+    // Install the previously saved ending high surrogate:
+    if (buffer.lastTrailingHighSurrogate != 0) {
+        charBuffer[0] = buffer.lastTrailingHighSurrogate;
+        buffer.lastTrailingHighSurrogate = 0;
+        offset = 1;
+    } else {
+        offset = 0;
+    }
+    final int read = readFully(reader, charBuffer, offset, numChars - offset);
+    buffer.length = offset + read;
+    final boolean result = buffer.length == numChars;
+    if (buffer.length < numChars) {
+        // We failed to fill the buffer. Even if the last char is a high
+        // surrogate, there is nothing we can do
+        return result;
+    }
+    if (Character.isHighSurrogate(charBuffer[buffer.length - 1])) {
+        buffer.lastTrailingHighSurrogate = charBuffer[--buffer.length];
+    }
+    return result;
+}]]],

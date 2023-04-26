@@ -1,0 +1,7 @@
+[[[private void createRemainingTypes(DocumentmanagerConfig config) {
+    for (var thisDataType : config.datatype()) {
+        int id = thisDataType.id();
+        var type = getOrCreateType(id);
+        assert (type != null);
+    }
+}]]],

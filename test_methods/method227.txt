@@ -1,0 +1,4 @@
+[[[static ParsedType arrayOf(ParsedType vt) {
+    assert (vt != null);
+    return new ParsedType("array<" + vt.name() + ">", Variant.ARRAY, vt);
+}]]],

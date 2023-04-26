@@ -1,0 +1,4 @@
+[[[public void register(ComponentId globalComponentId, ChainedComponentModel componentModel) {
+    assert (componentModel.getComponentId().withoutNamespace().equals(globalComponentId.withoutNamespace()));
+    componentModels.register(globalComponentId, ComponentAdaptor.create(globalComponentId, componentModel));
+}]]],

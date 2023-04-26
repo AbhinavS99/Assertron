@@ -1,0 +1,163 @@
+[[[@SuppressWarnings("unused")
+private static Object putIfMatch(final NonBlockingHashMap topmap, final Object[] kvs, final Object key, final Object putval, final Object expVal) {
+    assert putval != null;
+    assert !(putval instanceof Prime);
+    assert !(expVal instanceof Prime);
+    // throws NullPointerException if key null
+    final int fullhash = hash(key);
+    // Count of key/value pairs, reads kvs.length
+    final int len = len(kvs);
+    // Reads kvs[0]
+    final CHM chm = chm(kvs);
+    // Reads kvs[1], read before kvs[0]
+    final int[] hashes = hashes(kvs);
+    int idx = fullhash & (len - 1);
+    // ---
+    // Key-Claim stanza: spin till we can claim a Key (or force a resizing).
+    int reprobe_cnt = 0;
+    Object K, V;
+    Object[] newkvs = null;
+    while (true) {
+        // Spin till we get a Key slot
+        // Get old value (before volatile read below!)
+        V = val(kvs, idx);
+        // Get current key
+        K = key(kvs, idx);
+        if (K == null) {
+            // Slot is free?
+            // Found an empty Key slot - which means this Key has never been in
+            // this table.  No need to put a Tombstone - the Key is not here!
+            if (putval == TOMBSTONE)
+                // Not-now & never-been in this table
+                return putval;
+            if (expVal == MATCH_ANY)
+                // Will not match, even after K inserts
+                return null;
+            // Claim the null key-slot
+            if (CAS_key(kvs, idx, null, key)) {
+                // Claim slot for Key
+                // Raise key-slots-used count
+                chm._slots.add(1);
+                // Memoize fullhash
+                hashes[idx] = fullhash;
+                // Got it!
+                break;
+            }
+            // CAS to claim the key-slot failed.
+            // 
+            // This re-read of the Key points out an annoying short-coming of Java
+            // CAS.  Most hardware CAS's report back the existing value - so that
+            // if you fail you have a *witness* - the value which caused the CAS to
+            // fail.  The Java API turns this into a boolean destroying the
+            // witness.  Re-reading does not recover the witness because another
+            // thread can write over the memory after the CAS.  Hence we can be in
+            // the unfortunate situation of having a CAS fail *for cause* but
+            // having that cause removed by a later store.  This turns a
+            // non-spurious-failure CAS (such as Azul has) into one that can
+            // apparently spuriously fail - and we avoid apparent spurious failure
+            // by not allowing Keys to ever change.
+            // Volatile read, to force loads of K to retry despite JIT, otherwise
+            // it is legal to e.g. haul the load of "K = key(kvs,idx);" outside of
+            // this loop (since failed CAS ops have no memory ordering semantics).
+            int dummy = DUMMY_VOLATILE;
+            continue;
+        }
+        // Key slot was not null, there exists a Key here
+        // We need a volatile-read here to preserve happens-before semantics on
+        // newly inserted Keys.  If the Key body was written just before inserting
+        // into the table a Key-compare here might read the uninitialized Key body.
+        // Annoyingly this means we have to volatile-read before EACH key compare.
+        // VOLATILE READ before key compare
+        newkvs = chm._newkvs;
+        if (keyeq(K, key, hashes, idx, fullhash))
+            // Got it!
+            break;
+        // get and put must have the same key lookup logic!  Lest 'get' give
+        // up looking too soon.
+        // topmap._reprobes.add(1);
+        if (// too many probes or
+        ++reprobe_cnt >= reprobe_limit(len) || K == TOMBSTONE) {
+            // found a TOMBSTONE key, means no more keys
+            // We simply must have a new table to do a 'put'.  At this point a
+            // 'get' will also go to the new table (if any).  We do not need
+            // to claim a key slot (indeed, we cannot find a free one to claim!).
+            newkvs = chm.resize(topmap, kvs);
+            if (expVal != null)
+                // help along an existing copy
+                topmap.help_copy(newkvs);
+            return putIfMatch(topmap, newkvs, key, putval, expVal);
+        }
+        // Reprobe!
+        idx = (idx + 1) & (len - 1);
+    }
+    // End of spinning till we get a Key slot
+    // ---
+    // Found the proper Key slot, now update the matching Value slot.  We
+    // never put a null, so Value slots monotonically move from null to
+    // not-null (deleted Values use Tombstone).  Thus if 'V' is null we
+    // fail this fast cutout and fall into the check for table-full.
+    if (putval == V)
+        // Fast cutout for no-change
+        return V;
+    // See if we want to move to a new table (to avoid high average re-probe
+    // counts).  We only check on the initial set of a Value from null to
+    // not-null (i.e., once per key-insert).  Of course we got a 'free' check
+    // of newkvs once per key-compare (not really free, but paid-for by the
+    // time we get here).
+    if (// New table-copy already spotted?
+    newkvs == null && // Once per fresh key-insert check the hard way
+    ((V == null && chm.tableFull(reprobe_cnt, len)) || // Or we found a Prime, but the JMM allowed reordering such that we
+    // did not spot the new table (very rare race here: the writing
+    // thread did a CAS of _newkvs then a store of a Prime.  This thread
+    // reads the Prime, then reads _newkvs - but the read of Prime was so
+    // delayed (or the read of _newkvs was so accelerated) that they
+    // swapped and we still read a null _newkvs.  The resize call below
+    // will do a CAS on _newkvs forcing the read.
+    V instanceof Prime))
+        // Force the new table copy to start
+        newkvs = chm.resize(topmap, kvs);
+    // See if we are moving to a new table.
+    // If so, copy our slot and retry in the new table.
+    if (newkvs != null)
+        return putIfMatch(topmap, chm.copy_slot_and_check(topmap, kvs, idx, expVal), key, putval, expVal);
+    // ---
+    // We are finally prepared to update the existing table
+    assert !(V instanceof Prime);
+    // Must match old, and we do not?  Then bail out now.  Note that either V
+    // or expVal might be TOMBSTONE.  Also V can be null, if we've never
+    // inserted a value before.  expVal can be null if we are called from
+    // copy_slot.
+    if (// Do we care about expected-Value at all?
+    expVal != NO_MATCH_OLD && // No instant match already?
+    V != expVal && (expVal != MATCH_ANY || V == TOMBSTONE || V == null) && // Match on null/TOMBSTONE combo
+    !(V == null && expVal == TOMBSTONE) && // Expensive equals check at the last
+    (expVal == null || !expVal.equals(V)))
+        // Do not update!
+        return V;
+    // Actually change the Value in the Key,Value pair
+    if (CAS_val(kvs, idx, V, putval)) {
+        // CAS succeeded - we did the update!
+        // Both normal put's and table-copy calls putIfMatch, but table-copy
+        // does not (effectively) increase the number of live k/v pairs.
+        if (expVal != null) {
+            // Adjust sizes - a striped counter
+            if ((V == null || V == TOMBSTONE) && putval != TOMBSTONE)
+                chm._size.add(1);
+            if (!(V == null || V == TOMBSTONE) && putval == TOMBSTONE)
+                chm._size.add(-1);
+        }
+    } else {
+        // Else CAS failed
+        // Get new value
+        V = val(kvs, idx);
+        // If a Prime'd value got installed, we need to re-run the put on the
+        // new table.  Otherwise we lost the CAS to another racing put.
+        // Simply retry from the start.
+        if (V instanceof Prime)
+            return putIfMatch(topmap, chm.copy_slot_and_check(topmap, kvs, idx, expVal), key, putval, expVal);
+    }
+    // Win or lose the CAS, we are done.  If we won then we know the update
+    // happened as expected.  If we lost, it means "we won but another thread
+    // immediately stomped our update with no chance of a reader reading".
+    return (V == null && expVal != null) ? TOMBSTONE : V;
+}]]],

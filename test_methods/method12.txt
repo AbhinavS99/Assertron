@@ -1,0 +1,10 @@
+[[[/**
+ * Sets the data opType
+ *
+ * @param dtype
+ */
+@Override
+public void setDType(DataType dtype) {
+    assert dtype == DataType.DOUBLE || dtype == DataType.FLOAT || dtype == DataType.INT : "Invalid opType passed, must be float or double";
+    // this.dtype = dtype;
+}]]],

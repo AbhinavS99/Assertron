@@ -1,0 +1,33 @@
+[[[@Override
+public void destroy() {
+    log.log(Level.FINE, () -> sessionName + ": synchronous destroy() called");
+    try {
+        synchronized (progress.getToken()) {
+            synchronized (completionMonitor) {
+                // If we are destroying the session before it has completed (e.g. because
+                // waitUntilDone timed out or an interactive visiting was interrupted)
+                // set us to aborted state so that we'll cease sending new visitors.
+                if (!done) {
+                    transitionTo(new StateDescription(State.ABORTED, "Session explicitly destroyed before completion"));
+                }
+            }
+        }
+        synchronized (completionMonitor) {
+            assert (!destroying) : "Attempted to destroy VisitorSession more than once";
+            destroying = true;
+            while (!done) {
+                completionMonitor.wait();
+            }
+        }
+    } catch (InterruptedException e) {
+        log.log(Level.WARNING, "Interrupted waiting for visitor session to be destroyed");
+    } finally {
+        try {
+            sender.destroy();
+            receiver.destroy();
+        } catch (Exception e) {
+            log.log(Level.SEVERE, "Caught exception destroying communication interfaces", e);
+        }
+        log.log(Level.FINE, () -> sessionName + ": synchronous destroy() done");
+    }
+}]]],

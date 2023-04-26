@@ -1,0 +1,4 @@
+[[[private static long rawIndex(long[] ary, int i) {
+    assert i >= 0 && i < ary.length;
+    return _Lbase + ((long) i * _Lscale);
+}]]],

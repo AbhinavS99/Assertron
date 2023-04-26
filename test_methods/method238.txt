@@ -1,0 +1,4 @@
+[[[public int[] get(int intervalRef) {
+    assert intervalRef < intervalsList.length;
+    return intervalsList[intervalRef];
+}]]],

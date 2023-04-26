@@ -1,0 +1,39 @@
+[[[@Override
+public Bitmap convert(Frame frame) {
+    if (frame == null || frame.image == null) {
+        return null;
+    }
+    Bitmap.Config config = null;
+    switch(frame.imageChannels) {
+        case 2:
+            config = Bitmap.Config.RGB_565;
+            break;
+        case 1:
+        case 3:
+        case 4:
+            config = Bitmap.Config.ARGB_8888;
+            break;
+        default:
+            assert false;
+    }
+    if (bitmap == null || bitmap.getWidth() != frame.imageWidth || bitmap.getHeight() != frame.imageHeight || bitmap.getConfig() != config) {
+        bitmap = Bitmap.createBitmap(frame.imageWidth, frame.imageHeight, config);
+    }
+    // assume frame.imageDepth == Frame.DEPTH_UBYTE
+    ByteBuffer in = (ByteBuffer) frame.image[0];
+    int width = frame.imageWidth;
+    int height = frame.imageHeight;
+    int stride = frame.imageStride;
+    int rowBytes = bitmap.getRowBytes();
+    if (frame.imageChannels == 1) {
+        gray2rgba(in, width, height, stride, rowBytes);
+        bitmap.copyPixelsFromBuffer(buffer.position(0));
+    } else if (frame.imageChannels == 3) {
+        bgr2rgba(in, width, height, stride, rowBytes);
+        bitmap.copyPixelsFromBuffer(buffer.position(0));
+    } else {
+        // assume matching strides
+        bitmap.copyPixelsFromBuffer(in.position(0));
+    }
+    return bitmap;
+}]]],

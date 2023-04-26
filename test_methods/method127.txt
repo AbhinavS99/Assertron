@@ -1,0 +1,29 @@
+[[[public CLKernel[] buildKernels(String compilerOptions, Class resourceClass, String resourceNames, String... kernelNames) {
+    try {
+        // load and compile program for the chosen device
+        InputStream s;
+        String[] a = resourceNames.split(":");
+        if (a.length == 1) {
+            s = resourceClass.getResourceAsStream(a[0]);
+        } else {
+            Vector<InputStream> vs = new Vector<InputStream>(a.length);
+            for (String name : a) {
+                vs.addElement(resourceClass.getResourceAsStream(name));
+            }
+            s = new SequenceInputStream(vs.elements());
+        }
+        CLProgram program = context.createProgram(s);
+        // System.out.println("Building " + resourceNames + "...");
+        program.build(compilerOptions);
+        // System.out.println(program.getBuildLog());
+        assert program.isExecutable();
+        // create kernel and set function parameters
+        CLKernel[] kernels = new CLKernel[kernelNames.length];
+        for (int i = 0; i < kernelNames.length; i++) {
+            kernels[i] = program.createCLKernel(kernelNames[i]);
+        }
+        return kernels;
+    } catch (IOException ex) {
+        throw (Error) new LinkageError(ex.toString()).initCause(ex);
+    }
+}]]],

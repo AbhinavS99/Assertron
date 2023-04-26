@@ -1,0 +1,145 @@
+[[[public CLGLImage2d createCLGLImageFrom(IplImage image, CLImage2d.Mem... flags) {
+    GL2 gl = getGL2();
+    if (gl == null) {
+        return null;
+    }
+    int width = image.width();
+    int height = image.height();
+    int pitch = image.widthStep();
+    // ByteBuffer buffer = image.getByteBuffer();
+    int format = 0;
+    int size = 0;
+    switch(image.nChannels()) {
+        case 1:
+            switch(image.depth()) {
+                case IPL_DEPTH_8S:
+                    format = GL2.GL_LUMINANCE8_SNORM;
+                    size = 1;
+                    break;
+                case IPL_DEPTH_8U:
+                    format = GL2.GL_LUMINANCE8;
+                    size = 1;
+                    break;
+                case IPL_DEPTH_16S:
+                    format = GL2.GL_LUMINANCE16_SNORM;
+                    size = 2;
+                    break;
+                case IPL_DEPTH_16U:
+                    format = GL2.GL_LUMINANCE16;
+                    size = 2;
+                    break;
+                case IPL_DEPTH_32S:
+                    format = GL2.GL_LUMINANCE32I;
+                    size = 4;
+                    break;
+                case IPL_DEPTH_32F:
+                    format = GL2.GL_LUMINANCE32F;
+                    size = 4;
+                    break;
+                default:
+                    assert false;
+            }
+            break;
+        case 2:
+            switch(image.depth()) {
+                case IPL_DEPTH_8S:
+                    format = GL2.GL_RG8_SNORM;
+                    size = 2;
+                    break;
+                case IPL_DEPTH_8U:
+                    format = GL2.GL_RG8;
+                    size = 2;
+                    break;
+                case IPL_DEPTH_16S:
+                    format = GL2.GL_RG16_SNORM;
+                    size = 4;
+                    break;
+                case IPL_DEPTH_16U:
+                    format = GL2.GL_RG16;
+                    size = 4;
+                    break;
+                case IPL_DEPTH_32S:
+                    format = GL2.GL_RG32I;
+                    size = 8;
+                    break;
+                case IPL_DEPTH_32F:
+                    format = GL2.GL_RG32F;
+                    size = 8;
+                    break;
+                default:
+                    assert false;
+            }
+            break;
+        case 3:
+            switch(image.depth()) {
+                case IPL_DEPTH_8S:
+                    format = GL2.GL_RGB8_SNORM;
+                    size = 3;
+                    break;
+                case IPL_DEPTH_8U:
+                    format = GL2.GL_RGB8;
+                    size = 3;
+                    break;
+                case IPL_DEPTH_16S:
+                    format = GL2.GL_RGB16_SNORM;
+                    size = 6;
+                    break;
+                case IPL_DEPTH_16U:
+                    format = GL2.GL_RGB16;
+                    size = 6;
+                    break;
+                case IPL_DEPTH_32S:
+                    format = GL2.GL_RGB32I;
+                    size = 12;
+                    break;
+                case IPL_DEPTH_32F:
+                    format = GL2.GL_RGB32F;
+                    size = 12;
+                    break;
+                default:
+                    assert false;
+            }
+            break;
+        case 4:
+            switch(image.depth()) {
+                case IPL_DEPTH_8S:
+                    format = GL2.GL_RGBA8_SNORM;
+                    size = 4;
+                    break;
+                case IPL_DEPTH_8U:
+                    format = GL2.GL_RGBA8;
+                    size = 4;
+                    break;
+                case IPL_DEPTH_16S:
+                    format = GL2.GL_RGBA16_SNORM;
+                    size = 8;
+                    break;
+                case IPL_DEPTH_16U:
+                    format = GL2.GL_RGBA16;
+                    size = 8;
+                    break;
+                case IPL_DEPTH_32S:
+                    format = GL2.GL_RGBA32I;
+                    size = 16;
+                    break;
+                case IPL_DEPTH_32F:
+                    format = GL2.GL_RGBA32F;
+                    size = 16;
+                    break;
+                default:
+                    assert false;
+            }
+            break;
+        default:
+            assert false;
+    }
+    // NVIDIA drivers do not like it when width != pitch/size
+    if (width != pitch / size) {
+        width = pitch / size;
+    }
+    int[] renderBuffer = new int[1];
+    gl.glGenRenderbuffers(1, renderBuffer, 0);
+    gl.glBindRenderbuffer(GL2.GL_RENDERBUFFER, renderBuffer[0]);
+    gl.glRenderbufferStorage(GL2.GL_RENDERBUFFER, format, width, height);
+    return getCLGLContext().createFromGLRenderbuffer(renderBuffer[0], flags);
+}]]],

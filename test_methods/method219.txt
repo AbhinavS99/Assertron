@@ -1,0 +1,4 @@
+[[[public ParsedType mapValueType() {
+    assert (variant == Variant.MAP);
+    return valType;
+}]]],

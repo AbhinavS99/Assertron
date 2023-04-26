@@ -1,0 +1,8 @@
+[[[@Override
+public void getConfig(ClusterConfig.Builder builder) {
+    assert (searchCluster != null) : "Null search cluster!";
+    builder.clusterId(searchCluster.getClusterIndex());
+    builder.clusterName(searchCluster.getClusterName());
+    if (searchCluster.getVisibilityDelay() != null)
+        builder.cacheTimeout(convertVisibilityDelay(searchCluster.getVisibilityDelay()));
+}]]],

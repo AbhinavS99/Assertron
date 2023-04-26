@@ -1,0 +1,29 @@
+[[[private void startDataTypes() {
+    for (var schema : orderedInput) {
+        String name = schema.getDocument().name();
+        documentsFromSchemas.put(name, new DocumentType(name));
+    }
+    for (var schema : orderedInput) {
+        var doc = schema.getDocument();
+        for (var struct : doc.getStructs()) {
+            String structId = doc.name() + "->" + struct.name();
+            var dt = new OwnedStructDataType(struct.name(), doc.name());
+            structsFromSchemas.put(structId, dt);
+        }
+        for (var annotation : doc.getAnnotations()) {
+            String annId = doc.name() + "->" + annotation.name();
+            var at = new SDAnnotationType(annotation.name());
+            annotationsFromSchemas.put(annId, at);
+            for (String inherit : annotation.getInherited()) {
+                at.inherit(inherit);
+            }
+            var withStruct = annotation.getStruct();
+            if (withStruct.isPresent()) {
+                ParsedStruct struct = withStruct.get();
+                String structId = doc.name() + "->" + struct.name();
+                var old = structsFromSchemas.put(structId, new OwnedStructDataType(struct.name(), doc.name()));
+                assert (old == null);
+            }
+        }
+    }
+}]]],

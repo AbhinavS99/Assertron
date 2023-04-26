@@ -1,0 +1,7 @@
+[[[public String getNameOfReferencedAnnotation() {
+    assert (variant == Variant.ANN_REFERENCE);
+    String prefix = "annotationreference<";
+    int fromPos = prefix.length();
+    int toPos = name.length() - 1;
+    return name.substring(fromPos, toPos);
+}]]],

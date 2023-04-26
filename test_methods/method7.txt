@@ -1,0 +1,9 @@
+[[[public AvatarGroupLayout(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    super(context, attrs, defStyleAttr, defStyleRes);
+    avatarBorderSize = DisplayUtils.convertDpToPixel(2, context);
+    avatarSize = DisplayUtils.convertDpToPixel(40, context);
+    overlapPx = DisplayUtils.convertDpToPixel(24, context);
+    borderDrawable = ContextCompat.getDrawable(context, R.drawable.round_bgnd);
+    assert borderDrawable != null;
+    DrawableCompat.setTint(borderDrawable, ContextCompat.getColor(context, R.color.bg_default));
+}]]],

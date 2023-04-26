@@ -1,0 +1,19 @@
+[[[public AccumulatorCollector(StreamingRuntimeContext context, List<String> metricNames) {
+    Preconditions.checkArgument(metricNames != null && metricNames.size() > 0);
+    valueAccumulatorMap = new HashMap<>(metricNames.size());
+    for (String metricName : metricNames) {
+        valueAccumulatorMap.put(metricName, new ValueAccumulator(context.getLongCounter(metricName), 0));
+    }
+    scheduledExecutorService = new ScheduledThreadPoolExecutor(1, r -> new Thread(r, THREAD_NAME));
+    // 比task manager心跳间隔多1秒
+    this.period = ((TaskManagerConfiguration) context.getTaskManagerRuntimeInfo()).getRpcTimeout().toMilliseconds() + 1000;
+    RpcGlobalAggregateManager globalAggregateManager = ((RpcGlobalAggregateManager) (context).getGlobalAggregateManager());
+    Field field = ReflectionUtils.getDeclaredField(globalAggregateManager, "jobMasterGateway");
+    assert field != null;
+    field.setAccessible(true);
+    try {
+        gateway = (JobMasterGateway) field.get(globalAggregateManager);
+    } catch (IllegalArgumentException | IllegalAccessException e) {
+        log.error("failed to get field:[gateway] from RpcGlobalAggregateManager, e = {}", ExceptionUtil.getErrorMessage(e));
+    }
+}]]],

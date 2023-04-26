@@ -1,0 +1,7 @@
+[[[public int getImageCount() {
+    int n = projectorCalibrator.getImageCount() / cameraCalibrators.length;
+    for (GeometricCalibrator c : cameraCalibrators) {
+        assert (c.getImageCount() == n);
+    }
+    return n;
+}]]],

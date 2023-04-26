@@ -1,0 +1,7 @@
+[[[void add(Object someType) {
+    assert (someType != null);
+    // the adding of "10000" here is mostly to make it more
+    // unique to grep for when debugging
+    int nextIdx = 10000 + map.size();
+    map.computeIfAbsent(someType, k -> nextIdx);
+}]]],

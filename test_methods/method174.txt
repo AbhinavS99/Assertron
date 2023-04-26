@@ -1,0 +1,28 @@
+[[[private LogEntry logEntryFromMeta(final long index, final ByteBuffer allData, final RaftOutter.EntryMeta entry) {
+    if (entry.getType() != EnumOutter.EntryType.ENTRY_TYPE_UNKNOWN) {
+        final LogEntry logEntry = new LogEntry();
+        logEntry.setId(new LogId(index, entry.getTerm()));
+        logEntry.setType(entry.getType());
+        if (entry.hasChecksum()) {
+            // since 1.2.6
+            logEntry.setChecksum(entry.getChecksum());
+        }
+        final long dataLen = entry.getDataLen();
+        if (dataLen > 0) {
+            final byte[] bs = new byte[(int) dataLen];
+            assert allData != null;
+            allData.get(bs, 0, bs.length);
+            logEntry.setData(ByteBuffer.wrap(bs));
+        }
+        if (entry.getPeersCount() > 0) {
+            if (entry.getType() != EnumOutter.EntryType.ENTRY_TYPE_CONFIGURATION) {
+                throw new IllegalStateException("Invalid log entry that contains peers but is not ENTRY_TYPE_CONFIGURATION type: " + entry.getType());
+            }
+            fillLogEntryPeers(entry, logEntry);
+        } else if (entry.getType() == EnumOutter.EntryType.ENTRY_TYPE_CONFIGURATION) {
+            throw new IllegalStateException("Invalid log entry that contains zero peers but is ENTRY_TYPE_CONFIGURATION type");
+        }
+        return logEntry;
+    }
+    return null;
+}]]],

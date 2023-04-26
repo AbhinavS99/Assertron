@@ -1,0 +1,58 @@
+[[[public Frame convert(PIX pix) {
+    if (pix == null) {
+        return null;
+    }
+    PIX tempPix = null;
+    if (pix.colormap() != null) {
+        tempPix = pix = pixRemoveColormap(pix, REMOVE_CMAP_TO_FULL_COLOR);
+    } else if (pix.d() < 8) {
+        switch(pix.d()) {
+            case 1:
+                tempPix = pix = pixConvert1To8(null, pix, (byte) 0, (byte) 255);
+                break;
+            case 2:
+                tempPix = pix = pixConvert2To8(pix, (byte) 0, (byte) 85, (byte) 170, (byte) 255, 0);
+                break;
+            case 4:
+                tempPix = pix = pixConvert4To8(pix, 0);
+                break;
+            default:
+                assert false;
+        }
+    }
+    if (!isEqual(frame, pix)) {
+        frame = new Frame();
+        frame.imageWidth = pix.w();
+        frame.imageHeight = pix.h();
+        frame.imageDepth = Frame.DEPTH_UBYTE;
+        frame.imageChannels = pix.d() / 8;
+        frame.imageStride = pix.wpl() * 4;
+        if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
+            if (frameData == null || frameData.capacity() < frame.imageHeight * frame.imageStride) {
+                if (frameData != null) {
+                    frameData.releaseReference();
+                }
+                frameData = new BytePointer(frame.imageHeight * frame.imageStride).retainReference();
+            }
+            frameBuffer = frameData.asByteBuffer().order(ByteOrder.LITTLE_ENDIAN);
+            frame.opaque = frameData;
+            frame.image = new Buffer[] { frameBuffer };
+        } else {
+            if (tempPix != null) {
+                if (this.pix != null) {
+                    this.pix.releaseReference();
+                }
+                this.pix = pix = pix.clone();
+            }
+            frame.opaque = pix;
+            frame.image = new Buffer[] { pix.createBuffer() };
+        }
+    }
+    if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
+        ((ByteBuffer) frameBuffer.position(0)).asIntBuffer().put(pix.createBuffer().order(ByteOrder.BIG_ENDIAN).asIntBuffer());
+    }
+    if (tempPix != null) {
+        pixDestroy(tempPix);
+    }
+    return frame;
+}]]],

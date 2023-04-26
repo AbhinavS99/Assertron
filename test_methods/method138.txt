@@ -1,0 +1,20 @@
+[[[@Override
+public MetadataConnection<SqlConnection> getConnection(String operator, Map<String, Object> params) throws Exception {
+    String host = String.valueOf(params.getOrDefault(SqlParamsMapper.PARAM_SQL_HOST.getValue(), ""));
+    // After deserialize, Integer will be Double, Why?
+    Integer port = (Double.valueOf(String.valueOf(params.getOrDefault(SqlParamsMapper.PARAM_SQL_PORT.getValue(), 0)))).intValue();
+    String username = String.valueOf(params.getOrDefault(SqlParamsMapper.PARAM_SQL_USERNAME.getValue(), ""));
+    String password = String.valueOf(params.getOrDefault(SqlParamsMapper.PARAM_SQL_PASSWORD.getValue(), ""));
+    String database = String.valueOf(params.getOrDefault(SqlParamsMapper.PARAM_SQL_DATABASE.getValue(), ""));
+    Map<String, Object> extraParams = new HashMap<>();
+    Object sqlParamObj = params.get(SqlParamsMapper.PARAM_SQL_EXTRA_PARAMS.getValue());
+    if (null != sqlParamObj) {
+        if (!(sqlParamObj instanceof Map)) {
+            extraParams = Json.fromJson(String.valueOf(sqlParamObj), Map.class, String.class, Object.class);
+        } else {
+            extraParams = (Map<String, Object>) sqlParamObj;
+        }
+    }
+    assert extraParams != null;
+    return new MetadataConnection<>(new SqlConnection(host, port, username, password, database, extraParams));
+}]]],

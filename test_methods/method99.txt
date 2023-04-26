@@ -1,0 +1,14 @@
+[[[/**
+ * Add {@link HashedWheelTimeout} to this bucket.
+ */
+public void addTimeout(HashedWheelTimeout timeout) {
+    assert timeout.bucket == null;
+    timeout.bucket = this;
+    if (head == null) {
+        head = tail = timeout;
+    } else {
+        tail.next = timeout;
+        timeout.prev = tail;
+        tail = timeout;
+    }
+}]]],

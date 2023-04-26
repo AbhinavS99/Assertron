@@ -1,0 +1,5 @@
+[[[public double getLongitude(Struct pos) {
+    assert (pos.getDataType() == this);
+    double ew = PositionDataType.getXValue(pos).getInteger() * 1.0e-6;
+    return ew;
+}]]],

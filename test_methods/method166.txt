@@ -1,0 +1,39 @@
+[[[/**
+ * We're here because currentChunk.index doesn't match the expectedChunkIndex. To resolve we must now chase the linked
+ * chunks to the appropriate chunk. More than one producer may end up racing to add or discover new chunks.
+ *
+ * @param initialChunk the starting point chunk, which does not match the required chunk index
+ * @param requiredChunkIndex the chunk index we need
+ * @return the chunk matching the required index
+ */
+final R producerChunkForIndex(final R initialChunk, final long requiredChunkIndex) {
+    R currentChunk = initialChunk;
+    long jumpBackward;
+    while (true) {
+        if (currentChunk == null) {
+            currentChunk = lvProducerChunk();
+        }
+        final long currentChunkIndex = currentChunk.lvIndex();
+        assert currentChunkIndex != NOT_USED;
+        // if the required chunk index is less than the current chunk index then we need to walk the linked list of
+        // chunks back to the required index
+        jumpBackward = currentChunkIndex - requiredChunkIndex;
+        if (jumpBackward >= 0) {
+            break;
+        }
+        // try validate against the last producer chunk index
+        if (lvProducerChunkIndex() == currentChunkIndex) {
+            currentChunk = appendNextChunks(currentChunk, currentChunkIndex, -jumpBackward);
+        } else {
+            currentChunk = null;
+        }
+    }
+    for (long i = 0; i < jumpBackward; i++) {
+        // prev cannot be null, because the consumer cannot null it without consuming the element for which we are
+        // trying to get the chunk.
+        currentChunk = currentChunk.lvPrev();
+        assert currentChunk != null;
+    }
+    assert currentChunk.lvIndex() == requiredChunkIndex;
+    return currentChunk;
+}]]],

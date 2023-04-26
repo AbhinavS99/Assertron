@@ -1,0 +1,67 @@
+[[[// --- copy_slot ---------------------------------------------------------
+// Copy one K/V pair from oldkvs[i] to newkvs.  Returns true if we can
+// confirm that the new table guaranteed has a value for this old-table
+// slot.  We need an accurate confirmed-copy count so that we know when we
+// can promote (if we promote the new table too soon, other threads may
+// 'miss' on values not-yet-copied from the old table).  We don't allow
+// any direct updates on the new table, unless they first happened to the
+// old table - so that any transition in the new table from null to
+// not-null must have been from a copy_slot (or other old-table overwrite)
+// and not from a thread directly writing in the new table.  Thus we can
+// count null-to-not-null transitions in the new table.
+private boolean copy_slot(NonBlockingHashMap topmap, int idx, Object[] oldkvs, Object[] newkvs) {
+    // Blindly set the key slot from null to TOMBSTONE, to eagerly stop
+    // fresh put's from inserting new values in the old table when the old
+    // table is mid-resize.  We don't need to act on the results here,
+    // because our correctness stems from box'ing the Value field.  Slamming
+    // the Key field is a minor speed optimization.
+    Object key;
+    while ((key = key(oldkvs, idx)) == null) CAS_key(oldkvs, idx, null, TOMBSTONE);
+    // ---
+    // Prevent new values from appearing in the old table.
+    // Box what we see in the old table, to prevent further updates.
+    // Read OLD table
+    Object oldval = val(oldkvs, idx);
+    while (!(oldval instanceof Prime)) {
+        final Prime box = (oldval == null || oldval == TOMBSTONE) ? TOMBPRIME : new Prime(oldval);
+        if (CAS_val(oldkvs, idx, oldval, box)) {
+            // CAS down a box'd version of oldval
+            // If we made the Value slot hold a TOMBPRIME, then we both
+            // prevented further updates here but also the (absent)
+            // oldval is vacuously available in the new table.  We
+            // return with true here: any thread looking for a value for
+            // this key can correctly go straight to the new table and
+            // skip looking in the old table.
+            if (box == TOMBPRIME)
+                return true;
+            // Otherwise we boxed something, but it still needs to be
+            // copied into the new table.
+            // Record updated oldval
+            oldval = box;
+            // Break loop; oldval is now boxed by us
+            break;
+        }
+        // Else try, try again
+        oldval = val(oldkvs, idx);
+    }
+    if (oldval == TOMBPRIME)
+        // Copy already complete here!
+        return false;
+    // ---
+    // Copy the value into the new table, but only if we overwrite a null.
+    // If another value is already in the new table, then somebody else
+    // wrote something there and that write is happens-after any value that
+    // appears in the old table.  If putIfMatch does not find a null in the
+    // new table - somebody else should have recorded the null-not_null
+    // transition in this copy.
+    Object old_unboxed = ((Prime) oldval)._V;
+    assert old_unboxed != TOMBSTONE;
+    boolean copied_into_new = (putIfMatch(topmap, newkvs, key, old_unboxed, null) == null);
+    // ---
+    // Finally, now that any old value is exposed in the new table, we can
+    // forever hide the old-table value by slapping a TOMBPRIME down.  This
+    // will stop other threads from uselessly attempting to copy this slot
+    // (i.e., it's a speed optimization not a correctness issue).
+    while (oldval != TOMBPRIME && !CAS_val(oldkvs, idx, oldval, TOMBPRIME)) oldval = val(oldkvs, idx);
+    return copied_into_new;
+}]]],

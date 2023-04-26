@@ -1,0 +1,15 @@
+[[[/**
+ * Creates a ConfigDefinitionKey from a file by reading the file and parsing
+ * contents for namespace. Name and from filename, but the filename may be prefixed
+ * with the namespace (if two def files has the same name for instance).
+ *
+ * @param file a config definition file
+ * @return a ConfigDefinitionKey
+ */
+public static ConfigDefinitionKey createConfigDefinitionKeyFromDefFile(File file) throws IOException {
+    String[] fileName = file.getName().split("\\.");
+    assert (fileName.length >= 2);
+    String name = fileName[fileName.length - 2];
+    byte[] content = IOUtils.readFileBytes(file);
+    return createConfigDefinitionKeyFromDefContent(name, content);
+}]]],

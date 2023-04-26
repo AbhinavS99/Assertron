@@ -1,0 +1,29 @@
+[[[void encodeValue(Inspector inspector) {
+    switch(inspector.type()) {
+        case NIX:
+            encodeNIX();
+            return;
+        case BOOL:
+            encodeBOOL(inspector.asBool());
+            return;
+        case LONG:
+            encodeLONG(inspector.asLong());
+            return;
+        case DOUBLE:
+            encodeDOUBLE(inspector.asDouble());
+            return;
+        case STRING:
+            encodeSTRING(inspector.asUtf8());
+            return;
+        case DATA:
+            encodeDATA(inspector.asData());
+            return;
+        case ARRAY:
+            encodeARRAY(inspector);
+            return;
+        case OBJECT:
+            encodeOBJECT(inspector);
+            return;
+    }
+    assert false : "Should not be reached";
+}]]],

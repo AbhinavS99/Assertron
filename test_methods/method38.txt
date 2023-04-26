@@ -1,0 +1,23 @@
+[[[private void convertDocument(Schema schema, ParsedDocument parsed, ConvertParsedFields fieldConverter) {
+    SDDocumentType document = new SDDocumentType(parsed.name());
+    for (var struct : parsed.getStructs()) {
+        var structProxy = fieldConverter.convertStructDeclaration(schema, document, struct);
+        document.addType(structProxy);
+    }
+    for (String inherit : parsed.getInherited()) {
+        var parent = convertedDocuments.get(inherit);
+        assert (parent != null);
+        document.inherit(parent);
+    }
+    for (var annotation : parsed.getAnnotations()) {
+        fieldConverter.convertAnnotation(schema, document, annotation);
+    }
+    for (var field : parsed.getFields()) {
+        var sdf = fieldConverter.convertDocumentField(schema, document, field);
+        if (field.hasIdOverride()) {
+            document.setFieldId(sdf, field.idOverride());
+        }
+    }
+    convertedDocuments.put(parsed.name(), document);
+    schema.addDocument(document);
+}]]],

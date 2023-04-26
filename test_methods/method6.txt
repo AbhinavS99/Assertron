@@ -1,0 +1,41 @@
+[[[@SuppressWarnings("unchecked")
+PeerRequestContext getOrCreatePeerRequestContext(final String groupId, final PeerPair pair, final Connection conn) {
+    ConcurrentMap<PeerPair, PeerRequestContext> groupContexts = this.peerRequestContexts.get(groupId);
+    if (groupContexts == null) {
+        groupContexts = new ConcurrentHashMap<>();
+        final ConcurrentMap<PeerPair, PeerRequestContext> existsCtxs = this.peerRequestContexts.putIfAbsent(groupId, groupContexts);
+        if (existsCtxs != null) {
+            groupContexts = existsCtxs;
+        }
+    }
+    PeerRequestContext peerCtx = groupContexts.get(pair);
+    if (peerCtx == null) {
+        synchronized (Utils.withLockObject(groupContexts)) {
+            peerCtx = groupContexts.get(pair);
+            // double check in lock
+            if (peerCtx == null) {
+                // only one thread to process append entries for every jraft node
+                final PeerId peer = new PeerId();
+                final boolean parsed = peer.parse(pair.local);
+                assert (parsed);
+                final Node node = NodeManager.getInstance().get(groupId, peer);
+                assert (node != null);
+                peerCtx = new PeerRequestContext(groupId, pair, node.getRaftOptions().getMaxReplicatorInflightMsgs());
+                groupContexts.put(pair, peerCtx);
+            }
+        }
+    }
+    // Add the pair to connection attribute metadata.
+    if (conn != null) {
+        Set<PeerPair> pairs;
+        if ((pairs = (Set<AppendEntriesRequestProcessor.PeerPair>) conn.getAttribute(PAIR_ATTR)) == null) {
+            pairs = new ConcurrentHashSet<>();
+            Set<PeerPair> existsPairs = (Set<PeerPair>) conn.setAttributeIfAbsent(PAIR_ATTR, pairs);
+            if (existsPairs != null) {
+                pairs = existsPairs;
+            }
+        }
+        pairs.add(pair);
+    }
+    return peerCtx;
+}]]],

@@ -1,0 +1,5 @@
+[[[@Override
+public void prepare(ConfigModelRepo plugins, DeployState deployState) {
+    assert (getCluster() != null) : "Null container cluster!";
+    getCluster().prepare(deployState);
+}]]],

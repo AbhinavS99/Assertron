@@ -1,0 +1,24 @@
+[[[// --- copy_slot_and_check -----------------------------------------------
+// Copy slot 'idx' from the old table to the new table.  If this thread
+// confirmed the copy, update the counters and check for promotion.
+// 
+// Returns the result of reading the volatile _newchm, mostly as a
+// convenience to callers.  We come here with 1-shot copy requests
+// typically because the caller has found a Prime, and has not yet read
+// the _newchm volatile - which must have changed from null-to-not-null
+// before any Prime appears.  So the caller needs to read the _newchm
+// field to retry his operation in the new table, but probably has not
+// read it yet.
+private CHM copy_slot_and_check(int idx, Object should_help) {
+    // We're only here because the caller saw a Prime, which implies a
+    // table-copy is in progress.
+    assert _newchm != null;
+    if (// Copy the desired slot
+    copy_slot(idx))
+        // Record the slot copied
+        copy_check_and_promote(1);
+    // Generically help along any copy (except if called recursively from a helper)
+    if (should_help != null)
+        _nbhml.help_copy();
+    return _newchm;
+}]]],

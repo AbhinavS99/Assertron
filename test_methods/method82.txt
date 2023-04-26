@@ -1,0 +1,5 @@
+[[[public double getLatitude(Struct pos) {
+    assert (pos.getDataType() == this);
+    double ns = PositionDataType.getYValue(pos).getInteger() * 1.0e-6;
+    return ns;
+}]]],

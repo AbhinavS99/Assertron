@@ -1,0 +1,47 @@
+[[[public void showImage(BufferedImage image) {
+    if (image == null) {
+        return;
+    }
+    this.color = null;
+    this.width = image.getWidth();
+    this.height = image.getHeight();
+    DataBuffer buffer = image.getRaster().getDataBuffer();
+    if (buffer instanceof DataBufferByte) {
+        this.buffer = ByteBuffer.wrap(((DataBufferByte) buffer).getData());
+        this.type = GL2.GL_UNSIGNED_BYTE;
+    } else if (buffer instanceof DataBufferDouble) {
+        this.buffer = DoubleBuffer.wrap(((DataBufferDouble) buffer).getData());
+        this.type = GL2.GL_DOUBLE;
+    } else if (buffer instanceof DataBufferFloat) {
+        this.buffer = FloatBuffer.wrap(((DataBufferFloat) buffer).getData());
+        this.type = GL2.GL_FLOAT;
+    } else if (buffer instanceof DataBufferInt) {
+        this.buffer = IntBuffer.wrap(((DataBufferInt) buffer).getData());
+        this.type = GL2.GL_INT;
+    } else if (buffer instanceof DataBufferShort) {
+        this.buffer = ShortBuffer.wrap(((DataBufferShort) buffer).getData());
+        this.type = GL2.GL_SHORT;
+    } else if (buffer instanceof DataBufferUShort) {
+        this.buffer = ShortBuffer.wrap(((DataBufferUShort) buffer).getData());
+        this.type = GL2.GL_UNSIGNED_SHORT;
+    } else {
+        assert false;
+    }
+    switch(image.getSampleModel().getNumBands()) {
+        case 1:
+            this.format = GL2.GL_LUMINANCE;
+            break;
+        case 2:
+            this.format = GL2.GL_RG;
+            break;
+        case 3:
+            this.format = GL2.GL_RGB;
+            break;
+        case 4:
+            this.format = GL2.GL_RGBA;
+            break;
+        default:
+            assert false;
+    }
+    getGLCanvas().display();
+}]]],

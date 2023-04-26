@@ -1,0 +1,12 @@
+[[[@Override
+public final boolean nextDocument(int docId) {
+    int index = currentIndex;
+    index = PostingListSearch.interpolationSearch(docIds, index, length, docId);
+    if (index == length) {
+        return false;
+    }
+    this.currentDocId = docIds[index];
+    this.currentIndex = index;
+    assert currentDocId > docId;
+    return true;
+}]]],

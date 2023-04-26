@@ -1,0 +1,4 @@
+[[[public Phase(String name, Dependencies dependencies) {
+    this(name, dependencies.before(), dependencies.after());
+    assert (dependencies.provides().isEmpty());
+}]]],

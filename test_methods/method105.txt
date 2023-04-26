@@ -1,0 +1,16 @@
+[[[/**
+ * Write the index entry
+ *  @param logIndex the log index
+ * @param position the physical position
+ * @param logType [1] means logEntry , [2] means confEntry
+ */
+public int appendIndex(final long logIndex, final int position, final byte logType) {
+    this.writeLock.lock();
+    try {
+        assert (logIndex > getLastLogIndex());
+        final byte[] writeData = encodeData(toRelativeOffset(logIndex), position, logType);
+        return doAppend(logIndex, writeData);
+    } finally {
+        this.writeLock.unlock();
+    }
+}]]],

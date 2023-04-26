@@ -1,0 +1,72 @@
+[[[/**
+ * Clamps image intensities between min and max.
+ */
+public static void clamp(IplImage src, IplImage dst, double min, double max) {
+    switch(src.depth()) {
+        case IPL_DEPTH_8U:
+            {
+                ByteBuffer sb = src.getByteBuffer();
+                ByteBuffer db = dst.getByteBuffer();
+                for (int i = 0; i < sb.capacity(); i++) {
+                    db.put(i, (byte) Math.max(Math.min(sb.get(i) & 0xFF, max), min));
+                }
+                break;
+            }
+        case IPL_DEPTH_16U:
+            {
+                ShortBuffer sb = src.getShortBuffer();
+                ShortBuffer db = dst.getShortBuffer();
+                for (int i = 0; i < sb.capacity(); i++) {
+                    db.put(i, (short) Math.max(Math.min(sb.get(i) & 0xFFFF, max), min));
+                }
+                break;
+            }
+        case IPL_DEPTH_32F:
+            {
+                FloatBuffer sb = src.getFloatBuffer();
+                FloatBuffer db = dst.getFloatBuffer();
+                for (int i = 0; i < sb.capacity(); i++) {
+                    db.put(i, (float) Math.max(Math.min(sb.get(i), max), min));
+                }
+                break;
+            }
+        case IPL_DEPTH_8S:
+            {
+                ByteBuffer sb = src.getByteBuffer();
+                ByteBuffer db = dst.getByteBuffer();
+                for (int i = 0; i < sb.capacity(); i++) {
+                    db.put(i, (byte) Math.max(Math.min(sb.get(i), max), min));
+                }
+                break;
+            }
+        case IPL_DEPTH_16S:
+            {
+                ShortBuffer sb = src.getShortBuffer();
+                ShortBuffer db = dst.getShortBuffer();
+                for (int i = 0; i < sb.capacity(); i++) {
+                    db.put(i, (short) Math.max(Math.min(sb.get(i), max), min));
+                }
+                break;
+            }
+        case IPL_DEPTH_32S:
+            {
+                IntBuffer sb = src.getIntBuffer();
+                IntBuffer db = dst.getIntBuffer();
+                for (int i = 0; i < sb.capacity(); i++) {
+                    db.put(i, (int) Math.max(Math.min(sb.get(i), max), min));
+                }
+                break;
+            }
+        case IPL_DEPTH_64F:
+            {
+                DoubleBuffer sb = src.getDoubleBuffer();
+                DoubleBuffer db = dst.getDoubleBuffer();
+                for (int i = 0; i < sb.capacity(); i++) {
+                    db.put(i, Math.max(Math.min(sb.get(i), max), min));
+                }
+                break;
+            }
+        default:
+            assert (false);
+    }
+}]]],

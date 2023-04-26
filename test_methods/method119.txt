@@ -1,0 +1,49 @@
+[[[public static void copy(Frame frame, BufferedImage bufferedImage, double gamma, boolean flipChannels, Rectangle roi) {
+    Buffer in = frame.image[0];
+    int bufferIndex = roi == null ? 0 : roi.y * frame.imageStride + roi.x * frame.imageChannels;
+    SampleModel sm = bufferedImage.getSampleModel();
+    Raster r = bufferedImage.getRaster();
+    DataBuffer out = r.getDataBuffer();
+    int x = -r.getSampleModelTranslateX();
+    int y = -r.getSampleModelTranslateY();
+    int step = sm.getWidth() * sm.getNumBands();
+    int channels = sm.getNumBands();
+    if (sm instanceof ComponentSampleModel) {
+        step = ((ComponentSampleModel) sm).getScanlineStride();
+        channels = ((ComponentSampleModel) sm).getPixelStride();
+    } else if (sm instanceof SinglePixelPackedSampleModel) {
+        step = ((SinglePixelPackedSampleModel) sm).getScanlineStride();
+        channels = 1;
+    } else if (sm instanceof MultiPixelPackedSampleModel) {
+        step = ((MultiPixelPackedSampleModel) sm).getScanlineStride();
+        // ??
+        channels = ((MultiPixelPackedSampleModel) sm).getPixelBitStride() / 8;
+    }
+    int start = y * step + x * channels;
+    if (out instanceof DataBufferByte) {
+        byte[] a = ((DataBufferByte) out).getData();
+        flipCopyWithGamma((ByteBuffer) in, bufferIndex, frame.imageStride, ByteBuffer.wrap(a), start, step, false, gamma, false, flipChannels ? channels : 0);
+    } else if (out instanceof DataBufferDouble) {
+        double[] a = ((DataBufferDouble) out).getData();
+        flipCopyWithGamma((DoubleBuffer) in, bufferIndex, frame.imageStride, DoubleBuffer.wrap(a), start, step, gamma, false, flipChannels ? channels : 0);
+    } else if (out instanceof DataBufferFloat) {
+        float[] a = ((DataBufferFloat) out).getData();
+        flipCopyWithGamma((FloatBuffer) in, bufferIndex, frame.imageStride, FloatBuffer.wrap(a), start, step, gamma, false, flipChannels ? channels : 0);
+    } else if (out instanceof DataBufferInt) {
+        int[] a = ((DataBufferInt) out).getData();
+        int stride = frame.imageStride;
+        if (in instanceof ByteBuffer) {
+            in = ((ByteBuffer) in).order(flipChannels ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN).asIntBuffer();
+            stride /= 4;
+        }
+        flipCopyWithGamma((IntBuffer) in, bufferIndex, stride, IntBuffer.wrap(a), start, step, gamma, false, flipChannels ? channels : 0);
+    } else if (out instanceof DataBufferShort) {
+        short[] a = ((DataBufferShort) out).getData();
+        flipCopyWithGamma((ShortBuffer) in, bufferIndex, frame.imageStride, ShortBuffer.wrap(a), start, step, true, gamma, false, flipChannels ? channels : 0);
+    } else if (out instanceof DataBufferUShort) {
+        short[] a = ((DataBufferUShort) out).getData();
+        flipCopyWithGamma((ShortBuffer) in, bufferIndex, frame.imageStride, ShortBuffer.wrap(a), start, step, false, gamma, false, flipChannels ? channels : 0);
+    } else {
+        assert false;
+    }
+}]]],

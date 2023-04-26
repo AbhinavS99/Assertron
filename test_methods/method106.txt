@@ -1,0 +1,10 @@
+[[[@Override
+public InetSocketAddress get(@NonNull String key, @NonNull SharedPreferences preferences) {
+    String value = preferences.getString(key, null);
+    // Not called unless value is present.
+    assert value != null;
+    String[] parts = value.split(":", 2);
+    String host = parts[0];
+    int port = parts.length > 1 ? Integer.parseInt(parts[1]) : 80;
+    return InetSocketAddress.createUnresolved(host, port);
+}]]],

@@ -1,0 +1,24 @@
+[[[private void writeHtmlState(ContentCluster cluster, StringBuilder sb, Timer timer, StateVersionTracker stateVersionTracker, FleetControllerOptions options, EventLog eventLog) {
+    VdsClusterHtmlRenderer renderer = new VdsClusterHtmlRenderer();
+    VdsClusterHtmlRenderer.Table table = renderer.createNewClusterHtmlTable(cluster.getName(), cluster.getSlobrokGenerationCount());
+    ClusterStateBundle state = stateVersionTracker.getVersionedClusterStateBundle();
+    if (state.clusterFeedIsBlocked()) {
+        // Implies FeedBlock != null
+        table.appendRaw("<h3 style=\"color: red\">Cluster feeding is blocked!</h3>\n");
+        table.appendRaw(String.format("<p>Summary: <strong>%s</strong></p>\n", HtmlTable.escape(state.getFeedBlockOrNull().getDescription())));
+    }
+    List<Group> groups = LeafGroups.enumerateFrom(cluster.getDistribution().getRootGroup());
+    for (Group group : groups) {
+        assert (group != null);
+        String localName = group.getUnixStylePath();
+        assert (localName != null);
+        TreeMap<Integer, NodeInfo> storageNodeInfoByIndex = new TreeMap<>();
+        TreeMap<Integer, NodeInfo> distributorNodeInfoByIndex = new TreeMap<>();
+        for (ConfiguredNode configuredNode : group.getNodes()) {
+            storeNodeInfo(cluster, configuredNode.index(), NodeType.STORAGE, storageNodeInfoByIndex);
+            storeNodeInfo(cluster, configuredNode.index(), NodeType.DISTRIBUTOR, distributorNodeInfoByIndex);
+        }
+        table.renderNodes(storageNodeInfoByIndex, distributorNodeInfoByIndex, timer, state, stateVersionTracker.getAggregatedClusterStats(), options.minMergeCompletionRatio(), options.maxPrematureCrashes(), options.clusterFeedBlockLimit(), eventLog, cluster.getName(), localName);
+    }
+    table.addTable(sb, options.stableStateTimePeriod());
+}]]],

@@ -1,0 +1,65 @@
+[[[// --- help_copy_impl ----------------------------------------------------
+// Help along an existing resize operation.  We hope its the top-level
+// copy (it was when we started) but this CHM might have been promoted out
+// of the top position.
+private final void help_copy_impl(NonBlockingIdentityHashMap topmap, Object[] oldkvs, boolean copy_all) {
+    assert chm(oldkvs) == this;
+    Object[] newkvs = _newkvs;
+    // Already checked by caller
+    assert newkvs != null;
+    // Total amount to copy
+    int oldlen = len(oldkvs);
+    // Limit per-thread work
+    final int MIN_COPY_WORK = Math.min(oldlen, 1024);
+    // ---
+    int panic_start = -1;
+    // Fool javac to think it's initialized
+    int copyidx = -9999;
+    while (_copyDone < oldlen) {
+        // Still needing to copy?
+        // Carve out a chunk of work.  The counter wraps around so every
+        // thread eventually tries to copy every slot repeatedly.
+        // We "panic" if we have tried TWICE to copy every slot - and it still
+        // has not happened.  i.e., twice some thread somewhere claimed they
+        // would copy 'slot X' (by bumping _copyIdx) but they never claimed to
+        // have finished (by bumping _copyDone).  Our choices become limited:
+        // we can wait for the work-claimers to finish (and become a blocking
+        // algorithm) or do the copy work ourselves.  Tiny tables with huge
+        // thread counts trying to copy the table often 'panic'.
+        if (panic_start == -1) {
+            // No panic?
+            copyidx = (int) _copyIdx;
+            while (// 'panic' check
+            copyidx < (oldlen << 1) && !_copyIdxUpdater.compareAndSet(this, copyidx, copyidx + MIN_COPY_WORK)) // Re-read
+            copyidx = (int) _copyIdx;
+            if (// Panic!
+            !(copyidx < (oldlen << 1)))
+                // Record where we started to panic-copy
+                panic_start = copyidx;
+        }
+        // We now know what to copy.  Try to copy.
+        int workdone = 0;
+        for (int i = 0; i < MIN_COPY_WORK; i++) if (// Made an oldtable slot go dead?
+        copy_slot(topmap, (copyidx + i) & (oldlen - 1), oldkvs, newkvs))
+            // Yes!
+            workdone++;
+        if (// Report work-done occasionally
+        workdone > 0)
+            // See if we can promote
+            copy_check_and_promote(topmap, oldkvs, workdone);
+        // for( int i=0; i<MIN_COPY_WORK; i++ )
+        // if( copy_slot(topmap,(copyidx+i)&(oldlen-1),oldkvs,newkvs) ) // Made an oldtable slot go dead?
+        // copy_check_and_promote( topmap, oldkvs, 1 );// See if we can promote
+        copyidx += MIN_COPY_WORK;
+        // Uncomment these next 2 lines to turn on incremental table-copy.
+        // Otherwise this thread continues to copy until it is all done.
+        if (// No panic?
+        !copy_all && panic_start == -1)
+            // Then done copying after doing MIN_COPY_WORK
+            return;
+    }
+    // Extra promotion check, in case another thread finished all copying
+    // then got stalled before promoting.
+    // See if we can promote
+    copy_check_and_promote(topmap, oldkvs, 0);
+}]]],

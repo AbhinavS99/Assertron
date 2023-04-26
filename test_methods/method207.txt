@@ -1,0 +1,10 @@
+[[[int compareDescriptors(ByteBuffer d1, ByteBuffer d2, int best) {
+    int totalCost = 0;
+    assert d1.limit() - d1.position() == d2.limit() - d2.position();
+    while (d1.position() < d1.limit()) {
+        totalCost += bits[(d1.get() ^ d2.get()) & 0xFF];
+        if (totalCost > best)
+            break;
+    }
+    return totalCost;
+}]]],

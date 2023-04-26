@@ -1,0 +1,11 @@
+[[[/**
+ * Utility function for getting node index from path name of the ephemeral nodes.
+ */
+private static int getIndex(String nodeName) {
+    assert (nodeName != null);
+    int lastSlash = nodeName.lastIndexOf('/');
+    if (lastSlash <= 1) {
+        throw new IllegalArgumentException("Unexpected path to nodename: '" + nodeName + "'.");
+    }
+    return Integer.parseInt(nodeName.substring(lastSlash + 1));
+}]]],

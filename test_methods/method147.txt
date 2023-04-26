@@ -1,0 +1,4 @@
+[[[private static <T> T toExternal(T value) {
+    assert value != null : "null is not a legitimate internal value. Concurrent Modification?";
+    return value == NULL_VALUE ? null : value;
+}]]],

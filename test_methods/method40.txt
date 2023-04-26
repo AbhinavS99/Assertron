@@ -1,0 +1,6 @@
+[[[private StructDataType findStructFromParsed(ParsedStruct resolved) {
+    String structId = resolved.getOwnerName() + "->" + resolved.name();
+    var struct = structsFromSchemas.get(structId);
+    assert (struct != null);
+    return struct;
+}]]],

@@ -1,0 +1,14 @@
+[[[@Override
+public MetadataConnection<ElasticConnection> getConnection(String operator, Map<String, Object> params) throws Exception {
+    String[] endPoints = new String[] {};
+    Object urls = params.get(ElasticParamsMapper.PARAM_ES_URLS.getValue());
+    if (!(urls instanceof List)) {
+        List<String> urlList = Json.fromJson(String.valueOf(urls), List.class, String.class);
+        assert urlList != null;
+        endPoints = urlList.toArray(endPoints);
+    } else {
+        endPoints = ((List<String>) urls).toArray(endPoints);
+    }
+    ElasticConnection conn = new ElasticConnection(endPoints, String.valueOf(params.getOrDefault(ElasticParamsMapper.PARAM_ES_USERNAME.getValue(), "")), String.valueOf(params.getOrDefault(ElasticParamsMapper.PARAM_ES_PASSWORD.getValue(), "")));
+    return new MetadataConnection<>(conn, false);
+}]]],

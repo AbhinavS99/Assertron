@@ -1,0 +1,5 @@
+[[[@Override
+protected final void writeRelease(long offset, int callTypeId) {
+    assert callTypeId != 0;
+    UNSAFE.putOrderedInt(null, offset, callTypeId);
+}]]],

@@ -1,0 +1,8 @@
+[[[private final TypeV putIfMatch(Object key, Object newVal, Object oldVal) {
+    if (oldVal == null || newVal == null)
+        throw new NullPointerException();
+    final Object res = putIfMatch0(this, _kvs, key, newVal, oldVal);
+    assert !(res instanceof Prime);
+    assert res != null;
+    return res == TOMBSTONE ? null : (TypeV) res;
+}]]],

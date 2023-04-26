@@ -1,0 +1,49 @@
+[[[public static DataType apply(String type) {
+    ColumnTypeUtil.DecimalInfo decimalInfo = null;
+    if (ColumnTypeUtil.isDecimalType(type)) {
+        decimalInfo = ColumnTypeUtil.getDecimalInfo(type, null);
+        if (decimalInfo != null) {
+            type = ColumnTypeUtil.TYPE_NAME;
+        }
+    }
+    switch(type.toUpperCase(Locale.ROOT)) {
+        case "INT":
+        case "INTEGER":
+            return DataTypes.INT();
+        case "BOOLEAN":
+        case "BIT":
+            return DataTypes.BOOLEAN();
+        case "TINYINT":
+            return DataTypes.TINYINT();
+        case "SHORT":
+            return DataTypes.SMALLINT();
+        case "SMALLINT":
+        case "MEDIUMINT":
+        case "BIGINT":
+        case "LONG":
+            return DataTypes.BIGINT();
+        case "FLOAT":
+            return DataTypes.FLOAT();
+        case "DECIMAL":
+            assert decimalInfo != null;
+            return DataTypes.DECIMAL(decimalInfo.getPrecision(), decimalInfo.getScale());
+        case "DOUBLE":
+            return DataTypes.DOUBLE();
+        case "CHAR":
+        case "CHARACTER":
+        case "STRING":
+        case "VARCHAR":
+        case "TEXT":
+            return DataTypes.STRING();
+        case "DATE":
+        case "YEAR":
+            return DataTypes.DATE();
+        case "TIME":
+            return DataTypes.TIME();
+        case "TIMESTAMP":
+        case "DATETIME":
+            return DataTypes.TIMESTAMP();
+        default:
+            throw new UnsupportedTypeException(type);
+    }
+}]]],

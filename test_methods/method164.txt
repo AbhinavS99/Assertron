@@ -1,0 +1,9 @@
+[[[private long detectSlowRotation(final long claimCycleId, final long nextCycleId) {
+    final long cycleId = lvActiveCycleId();
+    // Another producer has managed to perform a rotation to an higher cycleId?
+    assert cycleId != nextCycleId : "Duplicate rotation!";
+    if (cycleId > nextCycleId) {
+        throw new IllegalStateException("Slow rotation due to producer thread starvation detected: please enlarge the capacity or reduce the number of producers!\n" + "found activeCycleId=" + cycleId + "\n" + "expected activeCycleId=" + claimCycleId + "\n");
+    }
+    return cycleId;
+}]]],

@@ -1,0 +1,4 @@
+[[[public static int fromBoundaries(int begin, int end) {
+    assert begin >= INTERVAL_BEGIN && begin <= MAX_INTERVAL_END && end >= INTERVAL_BEGIN && end <= MAX_INTERVAL_END : toString(begin, end);
+    return (begin << 16) | end;
+}]]],

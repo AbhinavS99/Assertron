@@ -1,0 +1,18 @@
+[[[public static void addFileToURL(Set<URL> urlSet, Optional<File> pluginFile) {
+    pluginFile.ifPresent(item -> {
+        File[] files = item.listFiles();
+        assert files != null;
+        for (File file : files) {
+            if (file.isDirectory()) {
+                addFileToURL(urlSet, Optional.of(file));
+            }
+            if (file.isFile() && file.isAbsolute()) {
+                try {
+                    urlSet.add(file.toURI().toURL());
+                } catch (MalformedURLException e) {
+                    throw new ChunJunRuntimeException("The error should not occur, please check the code.", e);
+                }
+            }
+        }
+    });
+}]]],

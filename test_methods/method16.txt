@@ -1,0 +1,6 @@
+[[[// Must only be used when classId != null, otherwise the id must be handled as a ComponentSpecification
+// (since converting a spec string to a ComponentId and then to a ComponentSpecification causes loss of information).
+public BundleInstantiationSpecification(ComponentId id, ComponentSpecification classId, ComponentSpecification bundle) {
+    this(id.toSpecification(), classId, bundle);
+    assert (classId != null);
+}]]],

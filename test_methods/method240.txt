@@ -1,0 +1,13 @@
+[[[public double calibrate() {
+    Color[] cc = getCameraColors();
+    Color[] pc = getProjectorColors();
+    assert (counter == pc.length);
+    ColorCalibrator calibrator = new ColorCalibrator(projector);
+    projector.avgColorErr = calibrator.calibrate(cc, pc);
+    camera.colorMixingMatrix = CvMat.create(3, 3);
+    camera.additiveLight = CvMat.create(3, 1);
+    cvSetIdentity(camera.colorMixingMatrix);
+    cvSetZero(camera.additiveLight);
+    counter = 0;
+    return projector.avgColorErr;
+}]]],

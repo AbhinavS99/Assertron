@@ -1,0 +1,4 @@
+[[[ClassFileMetaData result() {
+    assert (!imports.contains("int"));
+    return new ClassFileMetaData(name, imports, exportPackageAnnotation);
+}]]],

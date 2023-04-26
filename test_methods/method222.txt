@@ -1,0 +1,4 @@
+[[[public boolean getRemoveIfZero() {
+    assert (variant == Variant.WSET);
+    return this.removeIfZero;
+}]]],

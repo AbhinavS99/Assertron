@@ -1,0 +1,5 @@
+[[[public Phase union(Phase phase) {
+    assert (getName().equals(phase.getName()));
+    Dependencies union = dependencies.union(phase.dependencies);
+    return new Phase(getName(), union.before(), union.after());
+}]]],

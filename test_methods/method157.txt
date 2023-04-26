@@ -1,0 +1,102 @@
+[[[@Override
+public E poll() {
+    final int chunkMask = this.chunkMask;
+    final int chunkShift = this.chunkShift;
+    long cIndex;
+    MpmcUnboundedXaddChunk<E> cChunk;
+    int ciChunkOffset;
+    boolean isFirstElementOfNewChunk;
+    boolean pooled = false;
+    E e = null;
+    MpmcUnboundedXaddChunk<E> next = null;
+    // start with bogus value, hope we don't need it
+    long pIndex = -1;
+    long ciChunkIndex;
+    while (true) {
+        isFirstElementOfNewChunk = false;
+        cIndex = this.lvConsumerIndex();
+        // chunk is in sync with the index, and is safe to mutate after CAS of index (because we pre-verify it
+        // matched the indicate ciChunkIndex)
+        cChunk = this.lvConsumerChunk();
+        ciChunkOffset = (int) (cIndex & chunkMask);
+        ciChunkIndex = cIndex >> chunkShift;
+        final long ccChunkIndex = cChunk.lvIndex();
+        if (ciChunkOffset == 0 && cIndex != 0) {
+            if (ciChunkIndex - ccChunkIndex != 1) {
+                continue;
+            }
+            isFirstElementOfNewChunk = true;
+            next = cChunk.lvNext();
+            // next could have been modified by another racing consumer, but:
+            // - if null: it still needs to check q empty + casConsumerIndex
+            // - if !null: it will fail on casConsumerIndex
+            if (next == null) {
+                if (// test against cached pIndex
+                cIndex >= pIndex && // update pIndex if we must
+                cIndex == (pIndex = lvProducerIndex())) {
+                    // strict empty check, this ensures [Queue.poll() == null iff isEmpty()]
+                    return null;
+                }
+                // we will go ahead with the CAS and have the winning consumer spin for the next buffer
+            }
+            // not empty: can attempt the cas (and transition to next chunk if successful)
+            if (casConsumerIndex(cIndex, cIndex + 1)) {
+                break;
+            }
+            continue;
+        }
+        if (ccChunkIndex > ciChunkIndex) {
+            // stale view of the world
+            continue;
+        }
+        // mid chunk elements
+        assert !isFirstElementOfNewChunk && ccChunkIndex <= ciChunkIndex;
+        pooled = cChunk.isPooled();
+        if (ccChunkIndex == ciChunkIndex) {
+            if (pooled) {
+                // Pooled chunks need a stronger guarantee than just element null checking in case of a stale view
+                // on a reused entry where a racing consumer has grabbed the slot but not yet null-ed it out and a
+                // producer has not yet set it to the new value.
+                final long sequence = cChunk.lvSequence(ciChunkOffset);
+                if (sequence == ciChunkIndex) {
+                    if (casConsumerIndex(cIndex, cIndex + 1)) {
+                        break;
+                    }
+                    continue;
+                }
+                if (sequence > ciChunkIndex) {
+                    // stale view of the world
+                    continue;
+                }
+                // sequence < ciChunkIndex: element yet to be set?
+            } else {
+                e = cChunk.lvElement(ciChunkOffset);
+                if (e != null) {
+                    if (casConsumerIndex(cIndex, cIndex + 1)) {
+                        break;
+                    }
+                    continue;
+                }
+                // e == null: element yet to be set?
+            }
+        }
+        // ccChunkIndex < ciChunkIndex || e == null || sequence < ciChunkIndex:
+        if (// test against cached pIndex
+        cIndex >= pIndex && // update pIndex if we must
+        cIndex == (pIndex = lvProducerIndex())) {
+            // strict empty check, this ensures [Queue.poll() == null iff isEmpty()]
+            return null;
+        }
+    }
+    // if we are the isFirstElementOfNewChunk we need to get the consumer chunk
+    if (isFirstElementOfNewChunk) {
+        e = switchToNextConsumerChunkAndPoll(cChunk, next, ciChunkIndex);
+    } else {
+        if (pooled) {
+            e = cChunk.lvElement(ciChunkOffset);
+        }
+        assert !cChunk.isPooled() || (cChunk.isPooled() && cChunk.lvSequence(ciChunkOffset) == ciChunkIndex);
+        cChunk.soElement(ciChunkOffset, null);
+    }
+    return e;
+}]]],

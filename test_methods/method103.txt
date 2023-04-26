@@ -1,0 +1,44 @@
+[[[public HttpTask(RequestParams params, Callback.Cancelable cancelHandler, Callback.CommonCallback<ResultType> callback) {
+    super(cancelHandler);
+    assert params != null;
+    assert callback != null;
+    // set params & callback
+    this.params = params;
+    this.callback = callback;
+    if (callback instanceof Callback.CacheCallback) {
+        this.cacheCallback = (Callback.CacheCallback<ResultType>) callback;
+    }
+    if (callback instanceof Callback.PrepareCallback) {
+        this.prepareCallback = (Callback.PrepareCallback) callback;
+    }
+    if (callback instanceof Callback.ProgressCallback) {
+        this.progressCallback = (Callback.ProgressCallback<ResultType>) callback;
+    }
+    if (callback instanceof RequestInterceptListener) {
+        this.requestInterceptListener = (RequestInterceptListener) callback;
+    }
+    // init tracker
+    {
+        RequestTracker customTracker = params.getRequestTracker();
+        if (customTracker == null) {
+            if (callback instanceof RequestTracker) {
+                customTracker = (RequestTracker) callback;
+            } else {
+                customTracker = UriRequestFactory.getDefaultTracker();
+            }
+        }
+        if (customTracker != null) {
+            tracker = new RequestTrackerWrapper(customTracker);
+        }
+    }
+    // init executor
+    if (params.getExecutor() != null) {
+        this.executor = params.getExecutor();
+    } else {
+        if (cacheCallback != null) {
+            this.executor = CACHE_EXECUTOR;
+        } else {
+            this.executor = HTTP_EXECUTOR;
+        }
+    }
+}]]],

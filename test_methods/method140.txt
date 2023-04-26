@@ -1,0 +1,13 @@
+[[[// TODO: take class instead of default node
+public LeafNodeVector(List<REAL> values, NODE defaultNode) {
+    assert (defaultNode != null) : "The default node cannot be null";
+    if (createNew(defaultNode) == null) {
+        throw new NullPointerException("Unable to duplicate the default node.");
+    }
+    for (REAL value : values) {
+        NODE node = createNew(defaultNode);
+        node.value = value;
+        vector.add(node);
+    }
+    realValues = realList(vector);
+}]]],

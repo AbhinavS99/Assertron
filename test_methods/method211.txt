@@ -1,0 +1,52 @@
+[[[public static DataType apply(String type) {
+    ColumnTypeUtil.DecimalInfo decimalInfo = null;
+    if (ColumnTypeUtil.isDecimalType(type)) {
+        decimalInfo = ColumnTypeUtil.getDecimalInfo(type, null);
+        if (decimalInfo != null) {
+            type = ColumnTypeUtil.TYPE_NAME;
+        }
+    }
+    switch(type.toUpperCase(Locale.ENGLISH)) {
+        case "SMALLINT":
+            return DataTypes.SMALLINT();
+        case "BINARY_DOUBLE":
+            return DataTypes.DOUBLE();
+        case "CHAR":
+        case "VARCHAR":
+        case "VARCHAR2":
+        case "NCHAR":
+        case "NVARCHAR2":
+        case "LONG":
+            return DataTypes.VARCHAR(OracleSqlConverter.CLOB_LENGTH - 1);
+        case "CLOB":
+        case "NCLOB":
+            return new AtomicDataType(new ClobType(true, LogicalTypeRoot.VARCHAR));
+        // case "XMLTYPE":
+        case "INT":
+        case "INTEGER":
+        case "NUMBER":
+        case "FLOAT":
+            return DataTypes.DECIMAL(38, 18);
+        case "DECIMAL":
+            assert decimalInfo != null;
+            return DataTypes.DECIMAL(decimalInfo.getPrecision(), decimalInfo.getScale());
+        case "DATE":
+            return DataTypes.DATE();
+        case "TIMESTAMP":
+            return DataTypes.TIMESTAMP();
+        case "RAW":
+        case "LONG RAW":
+            return DataTypes.BYTES();
+        case "BLOB":
+            return new AtomicDataType(new BlobType(true, LogicalTypeRoot.VARBINARY));
+        case "BINARY_FLOAT":
+            return DataTypes.FLOAT();
+        default:
+            if (TIMESTAMP_PREDICATE.test(type)) {
+                return DataTypes.TIMESTAMP();
+            } else if (type.startsWith("INTERVAL")) {
+                return DataTypes.STRING();
+            }
+            throw new UnsupportedTypeException(type);
+    }
+}]]],

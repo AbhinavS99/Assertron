@@ -1,0 +1,19 @@
+[[[/**
+ * Modified binary search:
+ *  - Returns the first index where a[index] is larger then key
+ */
+private static int binarySearch(int[] a, int fromIndex, int toIndex, int key) {
+    assert fromIndex < toIndex;
+    int low = fromIndex;
+    int high = toIndex - 1;
+    while (high - low > LINEAR_SEARCH_THRESHOLD) {
+        int mid = (low + high) >>> 1;
+        assert mid < high;
+        if (a[mid] < key) {
+            low = mid + 1;
+        } else {
+            high = mid;
+        }
+    }
+    return linearSearch(a, low, high + 1, key);
+}]]],

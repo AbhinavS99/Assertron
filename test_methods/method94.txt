@@ -1,0 +1,13 @@
+[[[/**
+ * Primitive boolean version of {@link #append(Object[], int, Object)}.
+ */
+public static boolean[] append(boolean[] array, int currentSize, boolean element) {
+    assert currentSize <= array.length;
+    if (currentSize + 1 > array.length) {
+        boolean[] newArray = new boolean[growSize(currentSize)];
+        System.arraycopy(array, 0, newArray, 0, currentSize);
+        array = newArray;
+    }
+    array[currentSize] = element;
+    return array;
+}]]],

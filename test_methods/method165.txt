@@ -1,0 +1,9 @@
+[[[private MpscUnboundedXaddChunk<E> pollNextBuffer(MpscUnboundedXaddChunk<E> cChunk, long cIndex) {
+    final MpscUnboundedXaddChunk<E> next = spinForNextIfNotEmpty(cChunk, cIndex);
+    if (next == null) {
+        return null;
+    }
+    moveToNextConsumerChunk(cChunk, next);
+    assert next.lvIndex() == cIndex >> chunkShift;
+    return next;
+}]]],

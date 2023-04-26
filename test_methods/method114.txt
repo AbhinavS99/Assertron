@@ -1,0 +1,76 @@
+[[[public static void flipCopyWithGamma(ShortBuffer srcBuf, int srcBufferIndex, int srcStep, ShortBuffer dstBuf, int dstBufferIndex, int dstStep, boolean signed, double gamma, boolean flip, int channels) {
+    assert srcBuf != dstBuf;
+    int w = Math.min(srcStep, dstStep);
+    int srcLine = srcBufferIndex, dstLine = dstBufferIndex;
+    short[] buffer = new short[channels];
+    while (srcLine < srcBuf.capacity() && dstLine < dstBuf.capacity()) {
+        if (flip) {
+            srcBufferIndex = srcBuf.capacity() - srcLine - srcStep;
+        } else {
+            srcBufferIndex = srcLine;
+        }
+        dstBufferIndex = dstLine;
+        w = Math.min(Math.min(w, srcBuf.capacity() - srcBufferIndex), dstBuf.capacity() - dstBufferIndex);
+        if (signed) {
+            if (channels > 1) {
+                for (int x = 0; x < w; x += channels) {
+                    for (int z = 0; z < channels; z++) {
+                        int in = srcBuf.get(srcBufferIndex++);
+                        short out;
+                        if (gamma == 1.0) {
+                            out = (short) in;
+                        } else {
+                            out = (short) Math.round(Math.pow((double) in / Short.MAX_VALUE, gamma) * Short.MAX_VALUE);
+                        }
+                        buffer[z] = out;
+                    }
+                    for (int z = channels - 1; z >= 0; z--) {
+                        dstBuf.put(dstBufferIndex++, buffer[z]);
+                    }
+                }
+            } else {
+                for (int x = 0; x < w; x++) {
+                    int in = srcBuf.get(srcBufferIndex++);
+                    short out;
+                    if (gamma == 1.0) {
+                        out = (short) in;
+                    } else {
+                        out = (short) Math.round(Math.pow((double) in / Short.MAX_VALUE, gamma) * Short.MAX_VALUE);
+                    }
+                    dstBuf.put(dstBufferIndex++, out);
+                }
+            }
+        } else {
+            if (channels > 1) {
+                for (int x = 0; x < w; x += channels) {
+                    for (int z = 0; z < channels; z++) {
+                        int in = srcBuf.get(srcBufferIndex++);
+                        short out;
+                        if (gamma == 1.0) {
+                            out = (short) in;
+                        } else {
+                            out = (short) Math.round(Math.pow((double) in / 0xFFFF, gamma) * 0xFFFF);
+                        }
+                        buffer[z] = out;
+                    }
+                    for (int z = channels - 1; z >= 0; z--) {
+                        dstBuf.put(dstBufferIndex++, buffer[z]);
+                    }
+                }
+            } else {
+                for (int x = 0; x < w; x++) {
+                    int in = srcBuf.get(srcBufferIndex++) & 0xFFFF;
+                    short out;
+                    if (gamma == 1.0) {
+                        out = (short) in;
+                    } else {
+                        out = (short) Math.round(Math.pow((double) in / 0xFFFF, gamma) * 0xFFFF);
+                    }
+                    dstBuf.put(dstBufferIndex++, out);
+                }
+            }
+        }
+        srcLine += srcStep;
+        dstLine += dstStep;
+    }
+}]]],

@@ -1,0 +1,4 @@
+[[[public void soSequence(int index, long e) {
+    assert isPooled();
+    soLongElement(sequence, calcLongElementOffset(index), e);
+}]]],

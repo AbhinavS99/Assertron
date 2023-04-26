@@ -1,0 +1,4 @@
+[[[public TensorType getTensorType() {
+    assert (variant == Variant.TENSOR);
+    return tensorType;
+}]]],

@@ -1,0 +1,63 @@
+[[[public CLImage2d createCLImageFrom(IplImage image, CLImage2d.Mem... flags) {
+    int width = image.width();
+    int height = image.height();
+    int pitch = image.widthStep();
+    ByteBuffer buffer = image.getByteBuffer();
+    ChannelOrder order = null;
+    ChannelType type = null;
+    int size = 0;
+    switch(image.depth()) {
+        case IPL_DEPTH_8S:
+            type = ChannelType.SNORM_INT8;
+            size = 1;
+            break;
+        case IPL_DEPTH_8U:
+            type = ChannelType.UNORM_INT8;
+            size = 1;
+            break;
+        case IPL_DEPTH_16S:
+            type = ChannelType.SNORM_INT16;
+            size = 2;
+            break;
+        case IPL_DEPTH_16U:
+            type = ChannelType.UNORM_INT16;
+            size = 2;
+            break;
+        case IPL_DEPTH_32S:
+            type = ChannelType.SIGNED_INT32;
+            size = 4;
+            break;
+        case IPL_DEPTH_32F:
+            type = ChannelType.FLOAT;
+            size = 4;
+            break;
+        default:
+            assert false;
+    }
+    switch(image.nChannels()) {
+        case 1:
+            order = ChannelOrder.LUMINANCE;
+            break;
+        case 2:
+            order = ChannelOrder.RG;
+            size *= 2;
+            break;
+        case 3:
+            order = ChannelOrder.RGB;
+            size *= 3;
+            break;
+        case 4:
+            order = ChannelOrder.RGBA;
+            size *= 4;
+            break;
+        default:
+            assert false;
+    }
+    // NVIDIA drivers do not like it when width != pitch/size
+    if (width != pitch / size) {
+        width = pitch / size;
+    }
+    CLImageFormat format = new CLImageFormat(order, type);
+    return context.createImage2d(buffer, width, height, /*pitch,*/
+    format, flags);
+}]]],

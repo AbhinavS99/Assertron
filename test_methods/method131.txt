@@ -1,0 +1,33 @@
+[[[private static Pair<List<String>, List<String>> checkAndModifyColumnWithMeta(String tableName, List<FieldConfig> column, List<String> metaColumnName, List<String> metaColumnType, String constantType) {
+    // check columnName and modify columnType
+    int metaColumnSize = metaColumnName.size();
+    List<String> columnNameList = new ArrayList<>(column.size());
+    List<String> columnTypeList = new ArrayList<>(column.size());
+    int index = 0;
+    for (FieldConfig fieldConfig : column) {
+        if (StringUtils.isNotBlank(fieldConfig.getValue())) {
+            fieldConfig.setType(constantType);
+            fieldConfig.setIndex(-1);
+        } else {
+            String name = fieldConfig.getName();
+            String metaType = null;
+            int i = 0;
+            for (; i < metaColumnSize; i++) {
+                // todo get precision and scale
+                if (metaColumnName.get(i).equalsIgnoreCase(name)) {
+                    metaType = metaColumnType.get(i);
+                    columnNameList.add(name);
+                    columnTypeList.add(metaType);
+                    fieldConfig.setIndex(index++);
+                    fieldConfig.setType(metaColumnType.get(i));
+                    break;
+                }
+            }
+            if (i == metaColumnSize) {
+                throw new ChunJunRuntimeException(String.format("The column[%s] does not exist in the table[%s]", name, tableName));
+            }
+            assert metaType != null : String.format("failed to get column type from db,column name= %s ", name);
+        }
+    }
+    return Pair.of(columnNameList, columnTypeList);
+}]]],

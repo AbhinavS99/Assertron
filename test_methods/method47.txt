@@ -1,0 +1,7 @@
+[[[private AbstractHandlerContext remove(final AbstractHandlerContext ctx) {
+    assert ctx != head && ctx != tail;
+    synchronized (this) {
+        remove0(ctx);
+        return ctx;
+    }
+}]]],

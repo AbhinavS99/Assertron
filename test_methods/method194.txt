@@ -1,0 +1,4 @@
+[[[private static long rawIndex(final Object[] ary, final int idx) {
+    assert idx >= 0 && idx < ary.length;
+    return _Obase + (idx * (long) _Oscale);
+}]]],

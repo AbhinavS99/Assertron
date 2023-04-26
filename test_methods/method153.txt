@@ -1,0 +1,6 @@
+[[[private void decrementScheduleHandleReplyTasks() {
+    synchronized (replyTrackingMonitor) {
+        assert (scheduledHandleReplyTasks > 0);
+        --scheduledHandleReplyTasks;
+    }
+}]]],

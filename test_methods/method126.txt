@@ -1,0 +1,41 @@
+[[[public static void fractalTriangleWave(IplImage image, CvMat H, int roughness) {
+    assert (image.depth() == IPL_DEPTH_32F);
+    double[] line = new double[image.width()];
+    fractalTriangleWave(line, 0, line.length / 2, 1, roughness);
+    fractalTriangleWave(line, line.length / 2, line.length - 1, -1, roughness);
+    double[] minMax = { Double.MAX_VALUE, Double.MIN_VALUE };
+    int height = image.height();
+    int width = image.width();
+    int channels = image.nChannels();
+    int step = image.widthStep();
+    int start = 0;
+    if (image.roi() != null) {
+        height = image.roi().height();
+        width = image.roi().width();
+        start = image.roi().yOffset() * step / 4 + image.roi().xOffset() * channels;
+    }
+    FloatBuffer fb = image.getFloatBuffer(start);
+    double[] h = H == null ? null : H.get();
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            for (int z = 0; z < channels; z++) {
+                double sum = 0.0;
+                if (h == null) {
+                    sum += line[x];
+                } else {
+                    double x2 = (h[0] * x + h[1] * y + h[2]) / (h[6] * x + h[7] * y + h[8]);
+                    while (x2 < 0) {
+                        x2 += line.length;
+                    }
+                    int xi2 = (int) x2;
+                    double xn = x2 - xi2;
+                    sum += line[xi2 % line.length] * (1 - xn) + line[(xi2 + 1) % line.length] * xn;
+                }
+                minMax[0] = Math.min(minMax[0], sum);
+                minMax[1] = Math.max(minMax[1], sum);
+                fb.put(y * step / 4 + x * channels + z, (float) sum);
+            }
+        }
+    }
+    cvConvertScale(image, image, 1 / (minMax[1] - minMax[0]), -minMax[0] / (minMax[1] - minMax[0]));
+}]]],

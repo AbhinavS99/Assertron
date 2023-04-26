@@ -1,0 +1,4 @@
+[[[static ParsedType documentRef(ParsedType docType) {
+    assert (docType != null);
+    return new ParsedType("reference<" + docType.name + ">", Variant.DOC_REFERENCE, docType);
+}]]],

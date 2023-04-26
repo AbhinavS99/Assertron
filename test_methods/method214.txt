@@ -1,0 +1,4 @@
+[[[List<ParsedDocument> getResolvedInherits() {
+    assert (inherited.size() == resolvedInherits.size());
+    return List.copyOf(resolvedInherits.values());
+}]]],

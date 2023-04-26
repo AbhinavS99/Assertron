@@ -1,0 +1,5 @@
+[[[public ChainedComponentModel(BundleInstantiationSpecification bundleInstantiationSpec, Dependencies dependencies, String configId) {
+    super(bundleInstantiationSpec, configId);
+    assert (dependencies != null);
+    this.dependencies = dependencies;
+}]]],

@@ -1,0 +1,23 @@
+[[[@SuppressWarnings("unchecked")
+private TypeV putIfMatch(long key, Object newVal, Object oldVal) {
+    if (oldVal == null || newVal == null)
+        throw new NullPointerException();
+    if (key == NO_KEY) {
+        Object curVal = _val_1;
+        if (// Do we care about expected-Value at all?
+        oldVal == NO_MATCH_OLD || // No instant match already?
+        curVal == oldVal || (oldVal == MATCH_ANY && curVal != TOMBSTONE) || oldVal.equals(curVal)) {
+            // Expensive equals check
+            if (// One shot CAS update attempt
+            !CAS(_val_1_offset, curVal, newVal))
+                // Failed; get failing witness
+                curVal = _val_1;
+        }
+        // Return the last value present
+        return curVal == TOMBSTONE ? null : (TypeV) curVal;
+    }
+    final Object res = _chm.putIfMatch(key, newVal, oldVal);
+    assert !(res instanceof Prime);
+    assert res != null;
+    return res == TOMBSTONE ? null : (TypeV) res;
+}]]],

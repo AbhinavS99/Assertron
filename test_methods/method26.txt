@@ -1,0 +1,12 @@
+[[[@Override
+public boolean fill(CharacterBuffer buffer, Reader reader, int numChars) throws IOException {
+    assert buffer.buffer.length >= 1;
+    if (numChars < 1 || numChars > buffer.buffer.length) {
+        throw new IllegalArgumentException("numChars must be >= 1 and <= the buffer size");
+    }
+    buffer.offset = 0;
+    final int read = readFully(reader, buffer.buffer, 0, numChars);
+    buffer.length = read;
+    buffer.lastTrailingHighSurrogate = 0;
+    return read == numChars;
+}]]],

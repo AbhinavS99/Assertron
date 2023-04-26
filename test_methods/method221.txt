@@ -1,0 +1,4 @@
+[[[public boolean getCreateIfNonExistent() {
+    assert (variant == Variant.WSET);
+    return this.createIfNonExistent;
+}]]],

@@ -1,0 +1,16 @@
+[[[public static void main(String[] args) {
+    System.out.println(FieldNameConstantAsEnumHandrolledExample.NAMES.intField);
+    FieldNameConstantAsEnumHandrolledExample.NAMES iAmAField = NAMES.stringField;
+    System.out.println(iAmAField);
+    print(iAmAField);
+    print(NAMES.valueOf("stringField"));
+    print(NAMES.valueOf("intField"));
+    assert iAmAField.compareTo(NAMES.valueOf("stringField")) == 0;
+    for (NAMES value : NAMES.values()) {
+        System.out.println("enum name is " + value.name());
+        print(value);
+    }
+    assert NAMES.stringField.ordinal() == 0;
+    assert NAMES.intField.ordinal() == 1;
+    assert NAMES.existingField.ordinal() == 2;
+}]]],

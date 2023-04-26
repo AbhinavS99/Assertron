@@ -1,0 +1,137 @@
+[[[// --- putIfMatch ---------------------------------------------------------
+// Put, Remove, PutIfAbsent, etc.  Return the old value.  If the returned
+// value is equal to expVal (or expVal is NO_MATCH_OLD) then the put can
+// be assumed to work (although might have been immediately overwritten).
+// Only the path through copy_slot passes in an expected value of null,
+// and putIfMatch only returns a null if passed in an expected null.
+private Object putIfMatch(final long key, final Object putval, final Object expVal) {
+    assert putval != null;
+    assert !(putval instanceof Prime);
+    assert !(expVal instanceof Prime);
+    final int len = _keys.length;
+    // The first key
+    int idx = (int) (key & (len - 1));
+    // ---
+    // Key-Claim stanza: spin till we can claim a Key (or force a resizing).
+    int reprobe_cnt = 0;
+    long K;
+    Object V;
+    while (true) {
+        // Spin till we get a Key slot
+        // Get old value
+        V = _vals[idx];
+        // Get current key
+        K = _keys[idx];
+        if (K == NO_KEY) {
+            // Slot is free?
+            // Found an empty Key slot - which means this Key has never been in
+            // this table.  No need to put a Tombstone - the Key is not here!
+            if (putval == TOMBSTONE)
+                // Not-now & never-been in this table
+                return putval;
+            // Claim the zero key-slot
+            if (CAS_key(idx, NO_KEY, key)) {
+                // Claim slot for Key
+                // Raise key-slots-used count
+                _slots.add(1);
+                // Got it!
+                break;
+            }
+            // CAS to claim the key-slot failed.
+            // 
+            // This re-read of the Key points out an annoying short-coming of Java
+            // CAS.  Most hardware CAS's report back the existing value - so that
+            // if you fail you have a *witness* - the value which caused the CAS
+            // to fail.  The Java API turns this into a boolean destroying the
+            // witness.  Re-reading does not recover the witness because another
+            // thread can write over the memory after the CAS.  Hence we can be in
+            // the unfortunate situation of having a CAS fail *for cause* but
+            // having that cause removed by a later store.  This turns a
+            // non-spurious-failure CAS (such as Azul has) into one that can
+            // apparently spuriously fail - and we avoid apparent spurious failure
+            // by not allowing Keys to ever change.
+            // CAS failed, get updated value
+            K = _keys[idx];
+            // If keys[idx] is NO_KEY, CAS shoulda worked
+            assert K != NO_KEY;
+        }
+        // Key slot was not null, there exists a Key here
+        if (K == key)
+            // Got it!
+            break;
+        // get and put must have the same key lookup logic!  Lest 'get' give
+        // up looking too soon.
+        // topmap._reprobes.add(1);
+        if (++reprobe_cnt >= reprobe_limit(len)) {
+            // We simply must have a new table to do a 'put'.  At this point a
+            // 'get' will also go to the new table (if any).  We do not need
+            // to claim a key slot (indeed, we cannot find a free one to claim!).
+            final CHM newchm = resize();
+            if (expVal != null)
+                // help along an existing copy
+                _nbhml.help_copy();
+            return newchm.putIfMatch(key, putval, expVal);
+        }
+        // Reprobe!
+        idx = (idx + 1) & (len - 1);
+    }
+    // End of spinning till we get a Key slot
+    // ---
+    // Found the proper Key slot, now update the matching Value slot.  We
+    // never put a null, so Value slots monotonically move from null to
+    // not-null (deleted Values use Tombstone).  Thus if 'V' is null we
+    // fail this fast cutout and fall into the check for table-full.
+    if (putval == V)
+        // Fast cutout for no-change
+        return V;
+    // See if we want to move to a new table (to avoid high average re-probe
+    // counts).  We only check on the initial set of a Value from null to
+    // not-null (i.e., once per key-insert).
+    if ((V == null && tableFull(reprobe_cnt, len)) || // Or we found a Prime: resize is already in progress.  The resize
+    // call below will do a CAS on _newchm forcing the read.
+    V instanceof Prime) {
+        // Force the new table copy to start
+        resize();
+        return copy_slot_and_check(idx, expVal).putIfMatch(key, putval, expVal);
+    }
+    // assert !(V instanceof Prime); // always true, so IDE warnings if uncommented
+    // ---
+    // We are finally prepared to update the existing table
+    // Must match old, and we do not?  Then bail out now.  Note that either V
+    // or expVal might be TOMBSTONE.  Also V can be null, if we've never
+    // inserted a value before.  expVal can be null if we are called from
+    // copy_slot.
+    if (// Do we care about expected-Value at all?
+    expVal != NO_MATCH_OLD && // No instant match already?
+    V != expVal && (expVal != MATCH_ANY || V == TOMBSTONE || V == null) && // Match on null/TOMBSTONE combo
+    !(V == null && expVal == TOMBSTONE) && // Expensive equals check at the last
+    (expVal == null || !expVal.equals(V)))
+        // Do not update!
+        return V;
+    // Actually change the Value in the Key,Value pair
+    if (CAS_val(idx, V, putval)) {
+        // CAS succeeded - we did the update!
+        // Both normal put's and table-copy calls putIfMatch, but table-copy
+        // does not (effectively) increase the number of live k/v pairs.
+        if (expVal != null) {
+            // Adjust sizes - a striped counter
+            if ((V == null || V == TOMBSTONE) && putval != TOMBSTONE)
+                _size.add(1);
+            if (!(V == null || V == TOMBSTONE) && putval == TOMBSTONE)
+                _size.add(-1);
+        }
+    } else {
+        // Else CAS failed
+        // Get new value
+        V = _vals[idx];
+        // If a Prime'd value got installed, we need to re-run the put on the
+        // new table.  Otherwise we lost the CAS to another racing put.
+        // Simply retry from the start.
+        if (V instanceof Prime)
+            return copy_slot_and_check(idx, expVal).putIfMatch(key, putval, expVal);
+    }
+    // Win or lose the CAS, we are done.  If we won then we know the update
+    // happened as expected.  If we lost, it means "we won but another thread
+    // immediately stomped our update with no chance of a reader reading".
+    return (V == null && expVal != null) ? TOMBSTONE : V;
+}]]],

@@ -1,0 +1,19 @@
+[[[public static List<DispatchSpec.Group> createDispatchGroups(List<SearchNode> searchNodes, int numDispatchGroups) {
+    if (numDispatchGroups > searchNodes.size())
+        numDispatchGroups = searchNodes.size();
+    List<DispatchSpec.Group> groupsSpec = new ArrayList<>();
+    int numNodesPerGroup = searchNodes.size() / numDispatchGroups;
+    if (searchNodes.size() % numDispatchGroups != 0) {
+        numNodesPerGroup += 1;
+    }
+    int searchNodeIdx = 0;
+    for (int i = 0; i < numDispatchGroups; ++i) {
+        DispatchSpec.Group groupSpec = new DispatchSpec.Group();
+        for (int j = 0; j < numNodesPerGroup && searchNodeIdx < searchNodes.size(); ++j) {
+            groupSpec.addNode(new DispatchSpec.Node(searchNodes.get(searchNodeIdx++).getDistributionKey()));
+        }
+        groupsSpec.add(groupSpec);
+    }
+    assert (searchNodeIdx == searchNodes.size());
+    return groupsSpec;
+}]]],

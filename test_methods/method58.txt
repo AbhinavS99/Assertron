@@ -1,0 +1,4 @@
+[[[void setDone(Object someType) {
+    assert (!isDone(someType));
+    doneMap.put(idxOf(someType), true);
+}]]],

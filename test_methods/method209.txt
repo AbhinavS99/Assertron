@@ -1,0 +1,54 @@
+[[[public IplImage grabVideo() throws Exception {
+    // default bpp == 0 == FREENECT_VIDEO_RGB
+    int fmt = videoFormat < 0 ? bpp : videoFormat;
+    int iplDepth = IPL_DEPTH_8U, channels = 3;
+    switch(fmt) {
+        case FREENECT_VIDEO_RGB:
+            iplDepth = IPL_DEPTH_8U;
+            channels = 3;
+            break;
+        case FREENECT_VIDEO_BAYER:
+        case FREENECT_VIDEO_IR_8BIT:
+            iplDepth = IPL_DEPTH_8U;
+            channels = 1;
+            break;
+        case FREENECT_VIDEO_IR_10BIT:
+            iplDepth = IPL_DEPTH_16U;
+            channels = 1;
+            break;
+        case FREENECT_VIDEO_YUV_RGB:
+            iplDepth = IPL_DEPTH_8U;
+            channels = 3;
+            break;
+        case FREENECT_VIDEO_YUV_RAW:
+            iplDepth = IPL_DEPTH_8U;
+            channels = 2;
+            break;
+        case FREENECT_VIDEO_IR_10BIT_PACKED:
+        default:
+            assert false;
+    }
+    int err = freenect_sync_get_video(rawVideoImageData, timestamp, deviceNumber, fmt);
+    if (err != 0) {
+        throw new Exception("freenect_sync_get_video() Error " + err + ": Failed to get video synchronously.");
+    }
+    // how to get the resolution ??
+    int w = 640, h = 480;
+    if (rawVideoImage == null || rawVideoImage.width() != w || rawVideoImage.height() != h) {
+        rawVideoImage = IplImage.createHeader(w, h, iplDepth, channels);
+    }
+    cvSetData(rawVideoImage, rawVideoImageData, w * channels * iplDepth / 8);
+    if (iplDepth > 8 && !ByteOrder.nativeOrder().equals(byteOrder)) {
+        // ack, the camera's endianness doesn't correspond to our machine ...
+        // swap bytes of 16-bit images
+        ByteBuffer bb = rawVideoImage.getByteBuffer();
+        ShortBuffer in = bb.order(ByteOrder.BIG_ENDIAN).asShortBuffer();
+        ShortBuffer out = bb.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
+        out.put(in);
+    }
+    if (channels == 3) {
+        cvCvtColor(rawVideoImage, rawVideoImage, CV_RGB2BGR);
+    }
+    super.timestamp = timestamp[0];
+    return rawVideoImage;
+}]]],

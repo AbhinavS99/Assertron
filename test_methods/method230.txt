@@ -1,0 +1,4 @@
+[[[static ParsedType tensorType(TensorType tType) {
+    assert (tType != null);
+    return new ParsedType(tType.toString(), Variant.TENSOR, null, null, tType);
+}]]],

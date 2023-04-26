@@ -1,0 +1,33 @@
+[[[/**
+ * Attempt to transition to a new state. Depending on the current state,
+ * some transitions may be disallowed, such as transitioning from ABORTED
+ * to COMPLETED, since failures take precedence. Transitioning multiple
+ * times to the same state is a no-op in order to conserve the textual
+ * description given by the first transition to said state (which most
+ * likely is the most useful one for the end-user).
+ *
+ * @param newState State to attempt to transition to.
+ * @return State which is current after the transition. If transition was
+ *   successful, will be equal to newState.
+ */
+private StateDescription transitionTo(StateDescription newState) {
+    log.log(Level.FINE, () -> sessionName + ": attempting transition to state " + newState);
+    switch(newState.getState()) {
+        case WORKING:
+            assert (state.getState() == State.NOT_STARTED);
+            state = newState;
+            break;
+        case ABORTED:
+            state = newState;
+            break;
+        case COMPLETED:
+        case FAILED:
+        case TIMED_OUT:
+            updateStateUnlessAlreadyFailed(newState);
+            break;
+        default:
+            com.yahoo.protect.Process.logAndDie("Invalid target transition state: " + newState);
+    }
+    log.log(Level.FINE, () -> "Session '" + sessionName + "' is now in state " + state);
+    return state;
+}]]],

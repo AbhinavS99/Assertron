@@ -1,0 +1,44 @@
+[[[private void processImage() throws Exception {
+    frame.imageWidth = imageWidth > 0 ? imageWidth : video_c.width();
+    frame.imageHeight = imageHeight > 0 ? imageHeight : video_c.height();
+    frame.imageDepth = Frame.DEPTH_UBYTE;
+    switch(imageMode) {
+        case COLOR:
+        case GRAY:
+            // Deinterlace Picture
+            if (deinterlace) {
+                throw new Exception("Cannot deinterlace: Functionality moved to FFmpegFrameFilter.");
+            }
+            // Has the size changed?
+            if (frame.imageWidth != picture_rgb.width() || frame.imageHeight != picture_rgb.height()) {
+                initPictureRGB();
+            }
+            // Copy "metadata" fields
+            av_frame_copy_props(picture_rgb, picture);
+            // Convert the image into BGR or GRAY format that OpenCV uses
+            img_convert_ctx = sws_getCachedContext(img_convert_ctx, video_c.width(), video_c.height(), video_c.pix_fmt(), frame.imageWidth, frame.imageHeight, getPixelFormat(), imageScalingFlags != 0 ? imageScalingFlags : SWS_BILINEAR, null, null, (DoublePointer) null);
+            if (img_convert_ctx == null) {
+                throw new Exception("sws_getCachedContext() error: Cannot initialize the conversion context.");
+            }
+            // Convert the image from its native format to RGB or GRAY
+            sws_scale(img_convert_ctx, new PointerPointer(picture), picture.linesize(), 0, video_c.height(), new PointerPointer(picture_rgb), picture_rgb.linesize());
+            frame.imageStride = picture_rgb.linesize(0);
+            frame.image = image_buf;
+            frame.opaque = picture_rgb;
+            break;
+        case RAW:
+            frame.imageStride = picture.linesize(0);
+            BytePointer ptr = picture.data(0);
+            if (ptr != null && !ptr.equals(image_ptr[0])) {
+                image_ptr[0] = ptr.capacity(frame.imageHeight * frame.imageStride);
+                image_buf[0] = ptr.asBuffer();
+            }
+            frame.image = image_buf;
+            frame.opaque = picture;
+            break;
+        default:
+            assert false;
+    }
+    frame.image[0].limit(frame.imageHeight * frame.imageStride);
+    frame.imageChannels = frame.imageStride / frame.imageWidth;
+}]]],

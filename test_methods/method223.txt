@@ -1,0 +1,4 @@
+[[[public ParsedType getReferencedDocumentType() {
+    assert (variant == Variant.DOC_REFERENCE);
+    return valType;
+}]]],

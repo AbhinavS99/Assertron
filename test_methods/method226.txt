@@ -1,0 +1,6 @@
+[[[static ParsedType mapType(ParsedType kt, ParsedType vt) {
+    assert (kt != null);
+    assert (vt != null);
+    String name = "map<" + kt.name() + "," + vt.name() + ">";
+    return new ParsedType(name, Variant.MAP, kt, vt);
+}]]],

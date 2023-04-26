@@ -1,0 +1,5 @@
+[[[private Entry(int[] docIds, long frequency) {
+    this.docIds = docIds;
+    this.cost = docIds.length * (double) frequency;
+    assert cost > 0;
+}]]],

@@ -1,0 +1,24 @@
+[[[protected final R appendNextChunks(R currentChunk, long currentChunkIndex, long chunksToAppend) {
+    assert currentChunkIndex != NOT_USED;
+    // prevent other concurrent attempts on appendNextChunk
+    if (!casProducerChunkIndex(currentChunkIndex, ROTATION)) {
+        return null;
+    }
+    /* LOCKED FOR APPEND */
+    {
+        // it is valid for the currentChunk to be consumed while appending is in flight, but it's not valid for the
+        // current chunk ordering to change otherwise.
+        assert currentChunkIndex == currentChunk.lvIndex();
+        for (long i = 1; i <= chunksToAppend; i++) {
+            R newChunk = newOrPooledChunk(currentChunk, currentChunkIndex + i);
+            soProducerChunk(newChunk);
+            // link the next chunk only when finished
+            currentChunk.soNext(newChunk);
+            currentChunk = newChunk;
+        }
+        // release appending
+        soProducerChunkIndex(currentChunkIndex + chunksToAppend);
+    }
+    /* UNLOCKED FOR APPEND */
+    return currentChunk;
+}]]],

@@ -1,0 +1,10 @@
+[[[private static void release(CachedThreadPoolWithFallback executor) {
+    synchronized (globalLock) {
+        assert executor == globalExecutor;
+        usages--;
+        if (usages == 0) {
+            globalExecutor.close();
+            globalExecutor = null;
+        }
+    }
+}]]],

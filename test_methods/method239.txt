@@ -1,0 +1,14 @@
+[[[protected void initCache(boolean isExpired) {
+    CacheBuilder<String, DynamicPreparedStmt> cacheBuilder = CacheBuilder.newBuilder().maximumSize(cacheSize).removalListener(notification -> {
+        try {
+            assert notification.getValue() != null;
+            notification.getValue().close();
+        } catch (SQLException e) {
+            Log.error("", e);
+        }
+    });
+    if (isExpired) {
+        cacheBuilder.expireAfterAccess(cacheDurationMin, TimeUnit.MINUTES);
+    }
+    this.pstmtCache = cacheBuilder.build();
+}]]],

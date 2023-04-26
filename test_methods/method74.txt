@@ -1,0 +1,9 @@
+[[[public void updateOptions(FleetControllerOptions options) {
+    var newId = FleetControllerId.fromOptions(options);
+    synchronized (monitor) {
+        assert newId.equals(context.id());
+        context.log(logger, Level.INFO, "FleetController has new options");
+        nextOptions = FleetControllerOptions.Builder.copy(options).build();
+        monitor.notifyAll();
+    }
+}]]],

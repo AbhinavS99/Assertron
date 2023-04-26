@@ -1,0 +1,6 @@
+[[[public void addNestedField(ImportedField importedField) {
+    String prefix = fieldName() + ".";
+    assert (importedField.fieldName().substring(0, prefix.length()).equals(prefix));
+    String suffix = importedField.fieldName().substring(prefix.length());
+    nestedFields.put(suffix, importedField);
+}]]],

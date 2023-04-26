@@ -1,0 +1,11 @@
+[[[@Override
+public int produce(ProducerFunction<E> producer, int batchSize) {
+    E e;
+    int i = 0;
+    for (; i < batchSize; i++) {
+        e = producer.produce();
+        assert e != null;
+        weakOffer(e);
+    }
+    return i;
+}]]],

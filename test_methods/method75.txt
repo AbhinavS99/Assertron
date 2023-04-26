@@ -1,0 +1,6 @@
+[[[@Override
+public void write(ByteBuffer buf, CompletionHandler completionHandler) {
+    assert buf.hasArray();
+    accumulatedRequestContent.write(buf.array(), buf.arrayOffset() + buf.position(), buf.remaining());
+    completionHandler.completed();
+}]]],

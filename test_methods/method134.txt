@@ -1,0 +1,60 @@
+[[[private String readString() {
+    buf.reset();
+    byte quote = c;
+    assert (quote == '"' || quote == '\'');
+    next();
+    for (; ; ) {
+        switch(c) {
+            case '\\':
+                next();
+                switch(c) {
+                    case '"':
+                    case '\\':
+                    case '/':
+                    case '\'':
+                        buf.put(c);
+                        break;
+                    case 'b':
+                        buf.put((byte) '\b');
+                        break;
+                    case 'f':
+                        buf.put((byte) '\f');
+                        break;
+                    case 'n':
+                        buf.put((byte) '\n');
+                        break;
+                    case 'r':
+                        buf.put((byte) '\r');
+                        break;
+                    case 't':
+                        buf.put((byte) '\t');
+                        break;
+                    case 'u':
+                        writeUtf8(dequoteUtf16(), buf, 0xffffff80);
+                        continue;
+                    default:
+                        in.fail("Invalid quoted char(" + c + ")");
+                        break;
+                }
+                next();
+                break;
+            case '"':
+            case '\'':
+                if (c == quote) {
+                    next();
+                    return buf.toString(StandardCharsets.UTF_8);
+                } else {
+                    buf.put(c);
+                    next();
+                }
+                break;
+            case '\0':
+                in.fail("Unterminated string");
+                return buf.toString(StandardCharsets.UTF_8);
+            default:
+                buf.put(c);
+                next();
+                break;
+        }
+    }
+}]]],

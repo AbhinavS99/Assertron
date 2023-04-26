@@ -1,0 +1,28 @@
+[[[/**
+ * Unregisters a component unless this registry is frozen.
+ * Note that the component is not deconstructed or otherwise modified in any way, this
+ * is the responsiblity of the caller.
+ *
+ * @param id the id of the component to be unregistered
+ * @return the component that was unregistered, or null if no such component was already registered
+ */
+public COMPONENT unregister(ComponentId id) {
+    if (frozen)
+        throw new IllegalStateException("Cannot modify a frozen component registry");
+    COMPONENT removed = componentsById.remove(id);
+    if (removed != null) {
+        // removed is non-null, so it must be present here as well:
+        Map<String, Map<Version, COMPONENT>> componentVersionsByName = componentsByNameByNamespace.get(id.getNamespace());
+        Map<Version, COMPONENT> componentVersions = componentVersionsByName.get(id.getName());
+        COMPONENT removedInner = componentVersions.remove(id.getVersion());
+        assert (removedInner == removed);
+        // clean up
+        if (componentVersions.isEmpty()) {
+            componentVersionsByName.remove(id.getName());
+        }
+        if (componentVersionsByName.isEmpty()) {
+            componentsByNameByNamespace.remove(id.getNamespace());
+        }
+    }
+    return removed;
+}]]],

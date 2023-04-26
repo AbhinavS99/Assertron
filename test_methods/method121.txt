@@ -1,0 +1,64 @@
+[[[public BufferedImage getBufferedImage(Frame frame, double gamma, boolean flipChannels, ColorSpace cs) {
+    if (frame == null || frame.image == null) {
+        return null;
+    }
+    int type = getBufferedImageType(frame);
+    if (bufferedImage == null || bufferedImage.getWidth() != frame.imageWidth || bufferedImage.getHeight() != frame.imageHeight || bufferedImage.getType() != type) {
+        bufferedImage = type == BufferedImage.TYPE_CUSTOM || cs != null ? null : new BufferedImage(frame.imageWidth, frame.imageHeight, type);
+    }
+    if (bufferedImage == null) {
+        boolean alpha = false;
+        int[] offsets = null;
+        if (frame.imageChannels == 1) {
+            alpha = false;
+            if (cs == null) {
+                cs = ColorSpace.getInstance(ColorSpace.CS_GRAY);
+            }
+            offsets = new int[] { 0 };
+        } else if (frame.imageChannels == 3) {
+            alpha = false;
+            if (cs == null) {
+                cs = ColorSpace.getInstance(ColorSpace.CS_LINEAR_RGB);
+            }
+            // raster in "BGR" order like OpenCV..
+            offsets = new int[] { 2, 1, 0 };
+        } else if (frame.imageChannels == 4) {
+            alpha = true;
+            if (cs == null) {
+                cs = ColorSpace.getInstance(ColorSpace.CS_LINEAR_RGB);
+            }
+            // raster in "RGBA" order for OpenCL.. alpha needs to be last
+            offsets = new int[] { 0, 1, 2, 3 };
+        } else {
+            assert false;
+        }
+        ColorModel cm = null;
+        WritableRaster wr = null;
+        if (frame.imageDepth == Frame.DEPTH_UBYTE || frame.imageDepth == Frame.DEPTH_BYTE) {
+            cm = new ComponentColorModel(cs, alpha, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
+            wr = Raster.createWritableRaster(new ComponentSampleModel(DataBuffer.TYPE_BYTE, frame.imageWidth, frame.imageHeight, frame.imageChannels, frame.imageStride, offsets), null);
+        } else if (frame.imageDepth == Frame.DEPTH_USHORT) {
+            cm = new ComponentColorModel(cs, alpha, false, Transparency.OPAQUE, DataBuffer.TYPE_USHORT);
+            wr = Raster.createWritableRaster(new ComponentSampleModel(DataBuffer.TYPE_USHORT, frame.imageWidth, frame.imageHeight, frame.imageChannels, frame.imageStride, offsets), null);
+        } else if (frame.imageDepth == Frame.DEPTH_SHORT) {
+            cm = new ComponentColorModel(cs, alpha, false, Transparency.OPAQUE, DataBuffer.TYPE_SHORT);
+            wr = Raster.createWritableRaster(new ComponentSampleModel(DataBuffer.TYPE_SHORT, frame.imageWidth, frame.imageHeight, frame.imageChannels, frame.imageStride, offsets), null);
+        } else if (frame.imageDepth == Frame.DEPTH_INT) {
+            cm = new ComponentColorModel(cs, alpha, false, Transparency.OPAQUE, DataBuffer.TYPE_INT);
+            wr = Raster.createWritableRaster(new ComponentSampleModel(DataBuffer.TYPE_INT, frame.imageWidth, frame.imageHeight, frame.imageChannels, frame.imageStride, offsets), null);
+        } else if (frame.imageDepth == Frame.DEPTH_FLOAT) {
+            cm = new ComponentColorModel(cs, alpha, false, Transparency.OPAQUE, DataBuffer.TYPE_FLOAT);
+            wr = Raster.createWritableRaster(new ComponentSampleModel(DataBuffer.TYPE_FLOAT, frame.imageWidth, frame.imageHeight, frame.imageChannels, frame.imageStride, offsets), null);
+        } else if (frame.imageDepth == Frame.DEPTH_DOUBLE) {
+            cm = new ComponentColorModel(cs, alpha, false, Transparency.OPAQUE, DataBuffer.TYPE_DOUBLE);
+            wr = Raster.createWritableRaster(new ComponentSampleModel(DataBuffer.TYPE_DOUBLE, frame.imageWidth, frame.imageHeight, frame.imageChannels, frame.imageStride, offsets), null);
+        } else {
+            assert false;
+        }
+        bufferedImage = new BufferedImage(cm, wr, false, null);
+    }
+    if (bufferedImage != null) {
+        copy(frame, bufferedImage, gamma, flipChannels, null);
+    }
+    return bufferedImage;
+}]]],

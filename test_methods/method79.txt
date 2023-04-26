@@ -1,0 +1,46 @@
+[[[private CvMat[] getPoints(boolean useCenters) {
+    // fill up pointCounts, objectPoints and imagePoints, with data from
+    // srcMarkers and dstMarkers
+    assert (allObjectMarkers.size() == allImageMarkers.size());
+    Iterator<Marker[]> i1 = allObjectMarkers.iterator(), i2 = allImageMarkers.iterator();
+    CvMat pointCounts = CvMat.create(1, allImageMarkers.size(), CV_32S, 1);
+    IntBuffer pointCountsBuf = pointCounts.getIntBuffer();
+    int totalPointCount = 0;
+    while (i1.hasNext() && i2.hasNext()) {
+        Marker[] m1 = i1.next(), m2 = i2.next();
+        assert (m1.length == m2.length);
+        int n = m1.length * (useCenters ? 1 : 4);
+        pointCountsBuf.put(n);
+        totalPointCount += n;
+    }
+    i1 = allObjectMarkers.iterator();
+    i2 = allImageMarkers.iterator();
+    CvMat objectPoints = CvMat.create(1, totalPointCount, CV_32F, 3);
+    CvMat imagePoints = CvMat.create(1, totalPointCount, CV_32F, 2);
+    FloatBuffer objectPointsBuf = objectPoints.getFloatBuffer();
+    FloatBuffer imagePointsBuf = imagePoints.getFloatBuffer();
+    while (i1.hasNext() && i2.hasNext()) {
+        Marker[] m1 = i1.next(), m2 = i2.next();
+        for (int j = 0; j < m1.length; j++) {
+            if (useCenters) {
+                double[] c1 = m1[j].getCenter();
+                objectPointsBuf.put((float) c1[0]);
+                objectPointsBuf.put((float) c1[1]);
+                objectPointsBuf.put(0);
+                double[] c2 = m2[j].getCenter();
+                imagePointsBuf.put((float) c2[0]);
+                imagePointsBuf.put((float) c2[1]);
+            } else {
+                // use corners...
+                for (int k = 0; k < 4; k++) {
+                    objectPointsBuf.put((float) m1[j].corners[2 * k]);
+                    objectPointsBuf.put((float) m1[j].corners[2 * k + 1]);
+                    objectPointsBuf.put(0);
+                    imagePointsBuf.put((float) m2[j].corners[2 * k]);
+                    imagePointsBuf.put((float) m2[j].corners[2 * k + 1]);
+                }
+            }
+        }
+    }
+    return new CvMat[] { objectPoints, imagePoints, pointCounts };
+}]]],

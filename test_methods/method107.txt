@@ -1,0 +1,43 @@
+[[[private void resolveDocumentInheritance() {
+    for (ParsedSchema schema : parsedSchemas.values()) {
+        if (!schema.hasDocument()) {
+            throw new IllegalArgumentException("For schema '" + schema.name() + "': A search specification must have an equally named document inside of it.");
+        }
+        ParsedDocument doc = schema.getDocument();
+        var old = parsedDocs.put(doc.name(), doc);
+        if (old != null) {
+            throw new IllegalArgumentException("duplicate document declaration for " + doc.name());
+        }
+        schemaForDocs.put(doc.name(), schema);
+        for (String docInherit : doc.getInherited()) {
+            schema.inheritByDocument(docInherit);
+        }
+        for (String docReferenced : doc.getReferencedDocuments()) {
+            schema.inheritByDocument(docReferenced);
+        }
+    }
+    for (ParsedDocument doc : parsedDocs.values()) {
+        for (String inherit : doc.getInherited()) {
+            var parentDoc = parsedDocs.get(inherit);
+            if (parentDoc == null) {
+                throw new IllegalArgumentException("document " + doc.name() + " inherits from unavailable document " + inherit);
+            }
+            doc.resolveInherit(inherit, parentDoc);
+        }
+        for (String docRefName : doc.getReferencedDocuments()) {
+            var refDoc = parsedDocs.get(docRefName);
+            if (refDoc == null) {
+                throw new IllegalArgumentException("document " + doc.name() + " references unavailable document " + docRefName);
+            }
+            doc.resolveReferenced(refDoc);
+        }
+    }
+    for (ParsedSchema schema : parsedSchemas.values()) {
+        for (String docName : schema.getInheritedByDocument()) {
+            var parent = schemaForDocs.get(docName);
+            assert (parent.hasDocument());
+            assert (parent.getDocument().name().equals(docName));
+            schema.resolveInheritByDocument(docName, parent);
+        }
+    }
+}]]],

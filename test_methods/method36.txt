@@ -1,0 +1,10 @@
+[[[public ContainerDocproc(ContainerCluster<?> cluster, DocprocChains chains, Options options, boolean addSourceClientProvider) {
+    super(chains);
+    assert (options != null) : "Null Options for " + this + " under cluster " + cluster.getName();
+    this.options = options;
+    if (addSourceClientProvider) {
+        addSource(cluster, "source", SessionConfig.Type.SOURCE);
+        addSource(cluster, MbusRequestContext.internalNoThrottledSource, SessionConfig.Type.INTERNAL);
+    }
+    cluster.addSearchAndDocprocBundles();
+}]]],

@@ -1,0 +1,25 @@
+[[[// --- copy_check_and_promote --------------------------------------------
+private final void copy_check_and_promote(NonBlockingIdentityHashMap topmap, Object[] oldkvs, int workdone) {
+    assert chm(oldkvs) == this;
+    int oldlen = len(oldkvs);
+    // We made a slot unusable and so did some of the needed copy work
+    long copyDone = _copyDone;
+    assert (copyDone + workdone) <= oldlen;
+    if (workdone > 0) {
+        while (!_copyDoneUpdater.compareAndSet(this, copyDone, copyDone + workdone)) {
+            // Reload, retry
+            copyDone = _copyDone;
+            assert (copyDone + workdone) <= oldlen;
+        }
+    }
+    // Check for copy being ALL done, and promote.  Note that we might have
+    // nested in-progress copies and manage to finish a nested copy before
+    // finishing the top-level copy.  We only promote top-level copies.
+    if (// Ready to promote this table?
+    copyDone + workdone == oldlen && // Looking at the top-level table?
+    topmap._kvs == oldkvs && // Attempt to promote
+    topmap.CAS_kvs(oldkvs, _newkvs)) {
+        // Record resize time for next check
+        topmap._last_resize_milli = System.currentTimeMillis();
+    }
+}]]],

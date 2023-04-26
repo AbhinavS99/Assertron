@@ -1,0 +1,22 @@
+[[[/**
+ * Returns the bundle of a given name having the highest matching version
+ *
+ * @param id the id of the component to return. May not include a version, or include
+ *        an underspecified version, in which case the highest (matching) version which
+ *        does not contain a qualifier is returned
+ * @return the bundle match having the highest version, or null if there was no matches
+ */
+public Bundle getBundle(ComponentSpecification id) {
+    log.fine(() -> "Getting bundle for component " + id + ". Set of current bundles: " + getCurrentBundles());
+    Bundle highestMatch = null;
+    for (Bundle bundle : getCurrentBundles()) {
+        assert bundle.getSymbolicName() != null : "ensureHasBundleSymbolicName not called during installation";
+        if (!bundle.getSymbolicName().equals(id.getName()))
+            continue;
+        if (!id.getVersionSpecification().matches(versionOf(bundle)))
+            continue;
+        if (highestMatch == null || versionOf(highestMatch).compareTo(versionOf(bundle)) < 0)
+            highestMatch = bundle;
+    }
+    return highestMatch;
+}]]],

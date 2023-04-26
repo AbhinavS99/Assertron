@@ -1,0 +1,59 @@
+[[[public void transform(Data[] data, CvRect roi, ImageTransformer.Parameters[] parameters, boolean[] inverses) {
+    assert data.length == parameters.length;
+    if (kernelData == null || kernelData.capacity() < data.length) {
+        kernelData = new KernelData(data.length);
+    }
+    if ((H1 == null || H1.length < data.length) && surfaceTransformer != null) {
+        H1 = new CvMat[data.length];
+        for (int i = 0; i < H1.length; i++) {
+            H1[i] = CvMat.create(3, 3);
+        }
+    }
+    if (H2 == null || H2.length < data.length) {
+        H2 = new CvMat[data.length];
+        for (int i = 0; i < H2.length; i++) {
+            H2[i] = CvMat.create(3, 3);
+        }
+    }
+    if (X == null || X.length < data.length) {
+        X = new CvMat[data.length];
+        for (int i = 0; i < X.length; i++) {
+            X[i] = CvMat.create(4, 4);
+        }
+    }
+    for (int i = 0; i < data.length; i++) {
+        kernelData.position(i);
+        kernelData.srcImg(projectorImage[data[i].pyramidLevel]);
+        kernelData.srcImg2(surfaceTransformer == null ? null : data[i].srcImg);
+        kernelData.subImg(data[i].subImg);
+        kernelData.srcDotImg(data[i].srcDotImg);
+        kernelData.mask(data[i].mask);
+        kernelData.zeroThreshold(data[i].zeroThreshold);
+        kernelData.outlierThreshold(data[i].outlierThreshold);
+        if (inverses != null && inverses[i]) {
+            throw new UnsupportedOperationException("Inverse transform not supported.");
+        }
+        prepareTransforms(surfaceTransformer == null ? null : H1[i], H2[i], X[i], data[i].pyramidLevel, (Parameters) parameters[i]);
+        kernelData.H1(H2[i]);
+        kernelData.H2(surfaceTransformer == null ? null : H1[i]);
+        kernelData.X(X[i]);
+        kernelData.transImg(data[i].transImg);
+        kernelData.dstImg(data[i].dstImg);
+        kernelData.dstDstDot(data[i].dstDstDot);
+    }
+    long fullCapacity = kernelData.capacity();
+    kernelData.capacity(data.length);
+    multiWarpColorTransform(kernelData, roi, getFillColor());
+    kernelData.capacity(fullCapacity);
+    for (int i = 0; i < data.length; i++) {
+        kernelData.position(i);
+        data[i].dstCount = kernelData.dstCount();
+        data[i].dstCountZero = kernelData.dstCountZero();
+        data[i].dstCountOutlier = kernelData.dstCountOutlier();
+        data[i].srcDstDot = kernelData.srcDstDot();
+    }
+    // if (data[0].dstCountZero > 0) {
+    // System.err.println(data[0].dstCountZero + " out of " + data[0].dstCount
+    // + " are zero = " + 100*data[0].dstCountZero/data[0].dstCount + "%");
+    // }
+}]]],

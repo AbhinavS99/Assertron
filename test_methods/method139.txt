@@ -1,0 +1,52 @@
+[[[@Override
+public void onApply(final Iterator it) {
+    int index = 0;
+    int applied = 0;
+    try {
+        KVStateOutputList kvStates = KVStateOutputList.newInstance();
+        while (it.hasNext()) {
+            KVOperation kvOp;
+            final KVClosureAdapter done = (KVClosureAdapter) it.done();
+            if (done != null) {
+                kvOp = done.getOperation();
+            } else {
+                final ByteBuffer buf = it.getData();
+                try {
+                    if (buf.hasArray()) {
+                        kvOp = this.serializer.readObject(buf.array(), KVOperation.class);
+                    } else {
+                        kvOp = this.serializer.readObject(buf, KVOperation.class);
+                    }
+                    // follower ignore read operation
+                    if (kvOp != null && kvOp.isReadOp()) {
+                        ++index;
+                        it.next();
+                        continue;
+                    }
+                } catch (final Throwable t) {
+                    ++index;
+                    throw new StoreCodecException("Decode operation error", t);
+                }
+            }
+            final KVState first = kvStates.getFirstElement();
+            if (first != null && !first.isSameOp(kvOp)) {
+                applied += batchApplyAndRecycle(first.getOpByte(), kvStates);
+                kvStates = KVStateOutputList.newInstance();
+            }
+            kvStates.add(KVState.of(kvOp, done));
+            ++index;
+            it.next();
+        }
+        if (!kvStates.isEmpty()) {
+            final KVState first = kvStates.getFirstElement();
+            assert first != null;
+            applied += batchApplyAndRecycle(first.getOpByte(), kvStates);
+        }
+    } catch (final Throwable t) {
+        LOG.error("StateMachine meet critical error: {}.", StackTraceUtil.stackTrace(t));
+        it.setErrorAndRollback(index - applied, new Status(RaftError.ESTATEMACHINE, "StateMachine meet critical error: %s.", t.getMessage()));
+    } finally {
+        // metrics: qps
+        this.applyMeter.mark(applied);
+    }
+}]]],

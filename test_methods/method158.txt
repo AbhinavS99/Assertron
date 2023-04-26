@@ -1,0 +1,23 @@
+[[[private E switchToNextConsumerChunkAndPoll(MpmcUnboundedXaddChunk<E> cChunk, MpmcUnboundedXaddChunk<E> next, long expectedChunkIndex) {
+    if (next == null) {
+        final long ccChunkIndex = expectedChunkIndex - 1;
+        assert cChunk.lvIndex() == ccChunkIndex;
+        if (lvProducerChunkIndex() == ccChunkIndex) {
+            // no need to help too much here or the consumer latency will be hurt
+            next = appendNextChunks(cChunk, ccChunkIndex, 1);
+        }
+    }
+    while (next == null) {
+        next = cChunk.lvNext();
+    }
+    // we can freely spin awaiting producer, because we are the only one in charge to
+    // rotate the consumer buffer and use next
+    final E e = next.spinForElement(0, false);
+    final boolean pooled = next.isPooled();
+    if (pooled) {
+        next.spinForSequence(0, expectedChunkIndex);
+    }
+    next.soElement(0, null);
+    moveToNextConsumerChunk(cChunk, next);
+    return e;
+}]]],

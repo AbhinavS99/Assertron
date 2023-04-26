@@ -1,0 +1,33 @@
+[[[@Override
+public void onClick(View v) {
+    // should be already bound
+    assert person != null;
+    callbacks.onAddCarClick(person);
+}]]],[[[@Override
+public void onClick(View v) {
+    // should be already bound
+    assert person != null;
+    callbacks.onRemoveCarClick(person);
+}]]],[[[ViewHolder(@NonNull View itemView, @NonNull final Callbacks callbacks) {
+    super(itemView);
+    personTextView = (TextView) itemView.findViewById(R.id.list_item_person);
+    marksTextView = (TextView) itemView.findViewById(R.id.list_item_cars);
+    itemView.findViewById(R.id.add_car_button).setOnClickListener(new View.OnClickListener() {
+
+        @Override
+        public void onClick(View v) {
+            // should be already bound
+            assert person != null;
+            callbacks.onAddCarClick(person);
+        }
+    });
+    itemView.findViewById(R.id.remove_car_button).setOnClickListener(new View.OnClickListener() {
+
+        @Override
+        public void onClick(View v) {
+            // should be already bound
+            assert person != null;
+            callbacks.onRemoveCarClick(person);
+        }
+    });
+}]]],

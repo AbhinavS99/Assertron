@@ -1,0 +1,13 @@
+[[[private R newOrPooledChunk(R prevChunk, long nextChunkIndex) {
+    R newChunk = freeChunksPool.poll();
+    if (newChunk != null) {
+        // single-writer: prevChunk::index == nextChunkIndex is protecting it
+        assert newChunk.lvIndex() < prevChunk.lvIndex();
+        newChunk.soPrev(prevChunk);
+        // index set is releasing prev, allowing other pending offers to continue
+        newChunk.soIndex(nextChunkIndex);
+    } else {
+        newChunk = newChunk(nextChunkIndex, prevChunk, chunkMask + 1, false);
+    }
+    return newChunk;
+}]]],

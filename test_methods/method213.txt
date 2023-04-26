@@ -1,0 +1,4 @@
+[[[public List<ParsedAnnotation> getResolvedInherits() {
+    assert (inherited.size() == resolvedInherits.size());
+    return List.copyOf(resolvedInherits);
+}]]],

@@ -1,0 +1,16 @@
+[[[/**
+ * If want to use cache component, you should invoke this in constructor method
+ *
+ * @param cacheManager cache manage
+ */
+protected void initCache(CacheManager cacheManager) {
+    if (useCache()) {
+        String prefix = this.getClass().getSimpleName();
+        reqCache = cacheManager.buildCache(prefix + CONN_CACHE_REQ, notification -> {
+            assert notification.getValue() != null;
+            close(notification.getValue().getConnection());
+        });
+        // Clean up the req cache
+        reqCache.cleanUp();
+    }
+}]]],

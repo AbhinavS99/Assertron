@@ -1,0 +1,23 @@
+[[[private DataType getOrCreateType(int id) {
+    if (typesById.containsKey(id)) {
+        return typesById.get(id);
+    }
+    var config = configMap.remove(id);
+    if (config == null) {
+        return manager.getDataTypeByCode(id);
+    }
+    assert (id == config.id());
+    for (var o : config.arraytype()) {
+        return createArrayType(id, o);
+    }
+    for (var o : config.maptype()) {
+        return createMapType(id, o);
+    }
+    for (var o : config.weightedsettype()) {
+        return createWeightedSetType(id, o);
+    }
+    for (var o : config.referencetype()) {
+        return createReferenceType(id, o);
+    }
+    throw new IllegalArgumentException("Could not create type from config: " + config);
+}]]],

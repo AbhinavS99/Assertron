@@ -1,0 +1,4 @@
+[[[public long lvSequence(int index) {
+    assert isPooled();
+    return lvLongElement(sequence, calcLongElementOffset(index));
+}]]],

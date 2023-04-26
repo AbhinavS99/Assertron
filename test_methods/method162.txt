@@ -1,0 +1,10 @@
+[[[public void spinForSequence(int index, long e) {
+    assert isPooled();
+    final long[] sequence = this.sequence;
+    final long offset = calcLongElementOffset(index);
+    while (true) {
+        if (lvLongElement(sequence, offset) == e) {
+            break;
+        }
+    }
+}]]],

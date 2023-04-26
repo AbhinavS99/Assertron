@@ -1,0 +1,17 @@
+[[[/**
+ * Adds event to disk queue, NEVER call it in lock.
+ * @param done
+ * @param type
+ */
+private void offerEvent(final StableClosure done, final EventType type) {
+    assert (done != null);
+    if (this.stopped) {
+        ThreadPoolsFactory.runClosureInThread(this.groupId, done, new Status(RaftError.ESTOP, "Log manager is stopped."));
+        return;
+    }
+    this.diskQueue.publishEvent((event, sequence) -> {
+        event.reset();
+        event.type = type;
+        event.done = done;
+    });
+}]]],

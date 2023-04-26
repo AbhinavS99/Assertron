@@ -1,0 +1,5 @@
+[[[private void assertNoInnerComponents(ChainSpecification specWithoutInnerComponents) {
+    for (ComponentSpecification component : specWithoutInnerComponents.componentReferences) {
+        assert (component.getNamespace() == null);
+    }
+}]]],

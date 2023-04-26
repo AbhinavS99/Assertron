@@ -1,0 +1,66 @@
+[[[public IplImage createIplImageFrom(CLImage2d image) {
+    int width = image.width;
+    int height = image.height;
+    CLImageFormat format = image.getFormat();
+    ChannelOrder order = format.getImageChannelOrder();
+    ChannelType type = format.getImageChannelDataType();
+    int depth = 0, channels = 0;
+    switch(order) {
+        case R:
+        case A:
+        case INTENSITY:
+        case LUMINANCE:
+            channels = 1;
+            break;
+        case Rx:
+        case RG:
+        case RA:
+            channels = 2;
+            break;
+        case RGx:
+        case RGB:
+            channels = 3;
+            break;
+        case RGBx:
+        case RGBA:
+        case ARGB:
+        case BGRA:
+            channels = 4;
+            break;
+        default:
+            assert false;
+    }
+    switch(type) {
+        case SIGNED_INT8:
+        case SNORM_INT8:
+            depth = IPL_DEPTH_8S;
+            break;
+        case UNSIGNED_INT8:
+        case UNORM_INT8:
+            depth = IPL_DEPTH_8U;
+            break;
+        case SIGNED_INT16:
+        case SNORM_INT16:
+            depth = IPL_DEPTH_16S;
+            break;
+        case UNSIGNED_INT16:
+        case UNORM_INT16:
+            depth = IPL_DEPTH_16U;
+            break;
+        case UNSIGNED_INT32:
+        case SIGNED_INT32:
+            depth = IPL_DEPTH_32S;
+            break;
+        case FLOAT:
+            depth = IPL_DEPTH_32F;
+            break;
+        case HALF_FLOAT:
+        case UNORM_SHORT_565:
+        case UNORM_SHORT_555:
+        case UNORM_INT_101010:
+        default:
+            assert false;
+    }
+    return IplImage.create(width, height, depth, channels);
+    // return createPinnedIplImage(width, height, depth, channels);
+}]]],

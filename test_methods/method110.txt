@@ -1,0 +1,4 @@
+[[[public static int fromZStar2Boundaries(int end) {
+    assert end >= INTERVAL_BEGIN && end <= MAX_INTERVAL_END : toString(0, end);
+    return end;
+}]]],

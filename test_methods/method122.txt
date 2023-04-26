@@ -1,0 +1,51 @@
+[[[/**
+ * Returns a Frame based on a BufferedImage, given gamma, and inverted channels flag.
+ */
+public Frame getFrame(BufferedImage image, double gamma, boolean flipChannels) {
+    if (image == null) {
+        return null;
+    }
+    SampleModel sm = image.getSampleModel();
+    int depth = 0, numChannels = sm.getNumBands();
+    switch(image.getType()) {
+        case BufferedImage.TYPE_INT_RGB:
+        case BufferedImage.TYPE_INT_ARGB:
+        case BufferedImage.TYPE_INT_ARGB_PRE:
+        case BufferedImage.TYPE_INT_BGR:
+            depth = Frame.DEPTH_UBYTE;
+            numChannels = 4;
+            break;
+    }
+    if (depth == 0 || numChannels == 0) {
+        switch(sm.getDataType()) {
+            case DataBuffer.TYPE_BYTE:
+                depth = Frame.DEPTH_UBYTE;
+                break;
+            case DataBuffer.TYPE_USHORT:
+                depth = Frame.DEPTH_USHORT;
+                break;
+            case DataBuffer.TYPE_SHORT:
+                depth = Frame.DEPTH_SHORT;
+                break;
+            case DataBuffer.TYPE_INT:
+                depth = Frame.DEPTH_INT;
+                break;
+            case DataBuffer.TYPE_FLOAT:
+                depth = Frame.DEPTH_FLOAT;
+                break;
+            case DataBuffer.TYPE_DOUBLE:
+                depth = Frame.DEPTH_DOUBLE;
+                break;
+            default:
+                assert false;
+        }
+    }
+    if (frame == null || frame.imageWidth != image.getWidth() || frame.imageHeight != image.getHeight() || frame.imageDepth != depth || frame.imageChannels != numChannels) {
+        if (frame != null) {
+            frame.close();
+        }
+        frame = new Frame(image.getWidth(), image.getHeight(), depth, numChannels);
+    }
+    copy(image, frame, gamma, flipChannels, null);
+    return frame;
+}]]],

@@ -1,0 +1,4 @@
+[[[public int getImageCount() {
+    assert (allObjectMarkers.size() == allImageMarkers.size());
+    return allObjectMarkers.size();
+}]]],

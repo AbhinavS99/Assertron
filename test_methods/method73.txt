@@ -1,0 +1,30 @@
+[[[@Override
+protected InputSplit[] createInputSplitsInternal(int minNumSplits) {
+    List<String> inputFiles = new ArrayList<>();
+    String path = fileConfig.getPath();
+    if (path != null && path.length() > 0) {
+        path = path.replace("\n", "").replace("\r", "");
+        String[] filePaths = path.split(",");
+        for (String filePath : filePaths) {
+            File file = new File(filePath);
+            if (file.isFile()) {
+                inputFiles.add(filePath);
+            } else if (file.isDirectory()) {
+                File[] childFiles = file.listFiles();
+                assert childFiles != null;
+                List<String> collect = Arrays.stream(childFiles).map(File::getAbsolutePath).collect(Collectors.toList());
+                inputFiles.addAll(collect);
+            }
+        }
+    }
+    log.info("files = {}", GsonUtil.GSON.toJson(inputFiles));
+    int numSplits = (Math.min(inputFiles.size(), minNumSplits));
+    FileInputSplit[] fileInputSplits = new FileInputSplit[numSplits];
+    for (int index = 0; index < numSplits; ++index) {
+        fileInputSplits[index] = new FileInputSplit(index);
+    }
+    for (int i = 0; i < inputFiles.size(); ++i) {
+        fileInputSplits[i % numSplits].getPaths().add(inputFiles.get(i));
+    }
+    return fileInputSplits;
+}]]],

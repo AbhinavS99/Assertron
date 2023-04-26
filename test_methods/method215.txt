@@ -1,0 +1,12 @@
+[[[List<String> getReferencedDocuments() {
+    var result = new ArrayList<String>();
+    for (var field : docFields.values()) {
+        var type = field.getType();
+        if (type.getVariant() == ParsedType.Variant.DOC_REFERENCE) {
+            var docType = type.getReferencedDocumentType();
+            assert (docType.getVariant() == ParsedType.Variant.DOCUMENT);
+            result.add(docType.name());
+        }
+    }
+    return result;
+}]]],

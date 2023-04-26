@@ -1,0 +1,64 @@
+[[[@Override
+public E relaxedPoll() {
+    final int chunkMask = this.chunkMask;
+    final int chunkShift = this.chunkShift;
+    final long cIndex = this.lvConsumerIndex();
+    final MpmcUnboundedXaddChunk<E> cChunk = this.lvConsumerChunk();
+    final int ciChunkOffset = (int) (cIndex & chunkMask);
+    final long ciChunkIndex = cIndex >> chunkShift;
+    final boolean firstElementOfNewChunk = ciChunkOffset == 0 && cIndex != 0;
+    if (firstElementOfNewChunk) {
+        final long expectedChunkIndex = ciChunkIndex - 1;
+        final MpmcUnboundedXaddChunk<E> next;
+        final long ccChunkIndex = cChunk.lvIndex();
+        if (expectedChunkIndex != ccChunkIndex || (next = cChunk.lvNext()) == null) {
+            return null;
+        }
+        E e = null;
+        final boolean pooled = next.isPooled();
+        if (pooled) {
+            if (next.lvSequence(0) != ciChunkIndex) {
+                return null;
+            }
+        } else {
+            e = next.lvElement(0);
+            if (e == null) {
+                return null;
+            }
+        }
+        if (!casConsumerIndex(cIndex, cIndex + 1)) {
+            return null;
+        }
+        if (pooled) {
+            e = next.lvElement(0);
+        }
+        assert e != null;
+        next.soElement(0, null);
+        moveToNextConsumerChunk(cChunk, next);
+        return e;
+    } else {
+        final boolean pooled = cChunk.isPooled();
+        E e = null;
+        if (pooled) {
+            final long sequence = cChunk.lvSequence(ciChunkOffset);
+            if (sequence != ciChunkIndex) {
+                return null;
+            }
+        } else {
+            final long ccChunkIndex = cChunk.lvIndex();
+            if (ccChunkIndex != ciChunkIndex || (e = cChunk.lvElement(ciChunkOffset)) == null) {
+                return null;
+            }
+        }
+        if (!casConsumerIndex(cIndex, cIndex + 1)) {
+            return null;
+        }
+        if (pooled) {
+            e = cChunk.lvElement(ciChunkOffset);
+            assert e != null;
+        }
+        assert !pooled || (pooled && cChunk.lvSequence(ciChunkOffset) == ciChunkIndex);
+        cChunk.soElement(ciChunkOffset, null);
+        return e;
+    }
+}]]],

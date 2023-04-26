@@ -1,0 +1,6 @@
+[[[private void addOuterComponents(CHAINS chains, ComponentsBuilder<COMPONENT> outerComponentsBuilder) {
+    assert (outerComponentsBuilder.getOuterComponentReferences().isEmpty());
+    for (ChainedComponent<?> outerComponent : outerComponentsBuilder.getComponentDefinitions()) {
+        chains.add(outerComponent);
+    }
+}]]],

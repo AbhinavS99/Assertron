@@ -1,0 +1,45 @@
+[[[public static void flipCopyWithGamma(FloatBuffer srcBuf, int srcBufferIndex, int srcStep, FloatBuffer dstBuf, int dstBufferIndex, int dstStep, double gamma, boolean flip, int channels) {
+    assert srcBuf != dstBuf;
+    int w = Math.min(srcStep, dstStep);
+    int srcLine = srcBufferIndex, dstLine = dstBufferIndex;
+    float[] buffer = new float[channels];
+    while (srcLine < srcBuf.capacity() && dstLine < dstBuf.capacity()) {
+        if (flip) {
+            srcBufferIndex = srcBuf.capacity() - srcLine - srcStep;
+        } else {
+            srcBufferIndex = srcLine;
+        }
+        dstBufferIndex = dstLine;
+        w = Math.min(Math.min(w, srcBuf.capacity() - srcBufferIndex), dstBuf.capacity() - dstBufferIndex);
+        if (channels > 1) {
+            for (int x = 0; x < w; x += channels) {
+                for (int z = 0; z < channels; z++) {
+                    float in = srcBuf.get(srcBufferIndex++);
+                    float out;
+                    if (gamma == 1.0) {
+                        out = in;
+                    } else {
+                        out = (float) Math.pow(in, gamma);
+                    }
+                    buffer[z] = out;
+                }
+                for (int z = channels - 1; z >= 0; z--) {
+                    dstBuf.put(dstBufferIndex++, buffer[z]);
+                }
+            }
+        } else {
+            for (int x = 0; x < w; x++) {
+                float in = srcBuf.get(srcBufferIndex++);
+                float out;
+                if (gamma == 1.0) {
+                    out = in;
+                } else {
+                    out = (float) Math.pow(in, gamma);
+                }
+                dstBuf.put(dstBufferIndex++, out);
+            }
+        }
+        srcLine += srcStep;
+        dstLine += dstStep;
+    }
+}]]],

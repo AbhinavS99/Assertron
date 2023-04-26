@@ -1,0 +1,75 @@
+[[[@SuppressWarnings("unchecked")
+public double[] calibrate(boolean useCenters, boolean calibrateCameras, int cameraAtOrigin) {
+    GeometricCalibrator calibratorAtOrigin = cameraCalibrators[cameraAtOrigin];
+    // calibrate camera if not already calibrated...
+    if (calibrateCameras) {
+        for (int cameraNumber = 0; cameraNumber < cameraCalibrators.length; cameraNumber++) {
+            cameraCalibrators[cameraNumber].calibrate(useCenters);
+            if (cameraCalibrators[cameraNumber] != calibratorAtOrigin) {
+                calibratorAtOrigin.calibrateStereo(useCenters, cameraCalibrators[cameraNumber]);
+            }
+        }
+    }
+    // remove distortion from corners of imaged markers for projector calibration
+    // (in the case of the projector, markers imaged by the cameras, that is
+    // those affected by their distortions, are the "object" markers, but
+    // we need to remove this distortion, something we can do now that we
+    // have calibrated the cameras...)
+    LinkedList<Marker[]> allDistortedProjectorMarkers = projectorCalibrator.getAllObjectMarkers(), distortedProjectorMarkersAtOrigin = new LinkedList<Marker[]>(), allUndistortedProjectorMarkers = new LinkedList<Marker[]>(), undistortedProjectorMarkersAtOrigin = new LinkedList<Marker[]>();
+    Iterator<Marker[]> ip = allDistortedProjectorMarkers.iterator();
+    // "unchecked" warning here
+    Iterator<Marker[]>[] ib = new Iterator[cameraCalibrators.length];
+    for (int cameraNumber = 0; cameraNumber < cameraCalibrators.length; cameraNumber++) {
+        ib[cameraNumber] = allImagedBoardMarkers[cameraNumber].iterator();
+    }
+    // iterate over all the saved markers in the right order...
+    // eew, this is getting ugly...
+    while (ip.hasNext()) {
+        for (int cameraNumber = 0; cameraNumber < cameraCalibrators.length; cameraNumber++) {
+            double maxError = settings.prewarpUpdateErrorMax * (cameraCalibrators[cameraNumber].getProjectiveDevice().imageWidth + cameraCalibrators[cameraNumber].getProjectiveDevice().imageHeight) / 2;
+            Marker[] distortedBoardMarkers = ib[cameraNumber].next(), distortedProjectorMarkers = ip.next(), undistortedBoardMarkers = new Marker[distortedBoardMarkers.length], undistortedProjectorMarkers = new Marker[distortedProjectorMarkers.length];
+            // remove radial distortion from all points imaged by the camera
+            for (int i = 0; i < distortedBoardMarkers.length; i++) {
+                Marker m = undistortedBoardMarkers[i] = distortedBoardMarkers[i].clone();
+                m.corners = cameraCalibrators[cameraNumber].getProjectiveDevice().undistort(m.corners);
+            }
+            for (int i = 0; i < distortedProjectorMarkers.length; i++) {
+                Marker m = undistortedProjectorMarkers[i] = distortedProjectorMarkers[i].clone();
+                m.corners = cameraCalibrators[cameraNumber].getProjectiveDevice().undistort(m.corners);
+            }
+            // remove linear distortion/warping of camera imaged markers from
+            // the projector, to get their physical location on the board
+            if (boardPlane.getTotalWarp(undistortedBoardMarkers, boardWarp[cameraNumber]) > maxError) {
+                assert (false);
+            }
+            cvInvert(boardWarp[cameraNumber], boardWarp[cameraNumber]);
+            Marker.applyWarp(undistortedProjectorMarkers, boardWarp[cameraNumber]);
+            // tadam, we not have undistorted "object" corners for the projector..
+            allUndistortedProjectorMarkers.add(undistortedProjectorMarkers);
+            if (cameraCalibrators[cameraNumber] == calibratorAtOrigin) {
+                undistortedProjectorMarkersAtOrigin.add(undistortedProjectorMarkers);
+                distortedProjectorMarkersAtOrigin.add(distortedProjectorMarkers);
+            } else {
+                undistortedProjectorMarkersAtOrigin.add(new Marker[0]);
+                distortedProjectorMarkersAtOrigin.add(new Marker[0]);
+            }
+        }
+    }
+    // calibrate projector
+    projectorCalibrator.setAllObjectMarkers(allUndistortedProjectorMarkers);
+    double[] reprojErr = projectorCalibrator.calibrate(useCenters);
+    // projectorCalibrator.getProjectiveDevice().nominalDistance =
+    // projectorCalibrator.getProjectiveDevice().getNominalDistance(boardPlane);
+    // calibrate as a stereo pair (find rotation and translation)
+    // let's use the projector markers only...
+    LinkedList<Marker[]> om = calibratorAtOrigin.getAllObjectMarkers(), im = calibratorAtOrigin.getAllImageMarkers();
+    calibratorAtOrigin.setAllObjectMarkers(undistortedProjectorMarkersAtOrigin);
+    calibratorAtOrigin.setAllImageMarkers(distortedProjectorMarkersAtOrigin);
+    double[] epipolarErr = calibratorAtOrigin.calibrateStereo(useCenters, projectorCalibrator);
+    // reset everything as it was before we started, so we get the same
+    // result if called a second time..
+    projectorCalibrator.setAllObjectMarkers(allDistortedProjectorMarkers);
+    calibratorAtOrigin.setAllObjectMarkers(om);
+    calibratorAtOrigin.setAllImageMarkers(im);
+    return new double[] { reprojErr[0], reprojErr[1], epipolarErr[0], epipolarErr[1] };
+}]]],

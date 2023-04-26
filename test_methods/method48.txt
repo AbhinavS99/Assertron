@@ -1,0 +1,13 @@
+[[[private Handler replace(final AbstractHandlerContext ctx, String newName, Handler newHandler) {
+    assert ctx != head && ctx != tail;
+    synchronized (this) {
+        if (newName == null) {
+            newName = ctx.name();
+        } else if (!ctx.name().equals(newName)) {
+            newName = filterName(newName, newHandler);
+        }
+        final AbstractHandlerContext newCtx = new DefaultHandlerContext(this, ctx.invoker, newName, newHandler);
+        replace0(ctx, newCtx);
+        return ctx.handler();
+    }
+}]]],

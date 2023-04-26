@@ -1,0 +1,6 @@
+[[[@SuppressWarnings("unchecked")
+private static <T> Constructor<T> getConstructor(Class<T> builderClass) {
+    Constructor<?>[] constructors = builderClass.getConstructors();
+    assert (constructors.length == 1);
+    return (Constructor<T>) constructors[0];
+}]]],

@@ -1,0 +1,53 @@
+[[[@Override
+public void appendEntries(final List<LogEntry> entries, final StableClosure done) {
+    assert (done != null);
+    Requires.requireNonNull(done, "done");
+    if (this.hasError) {
+        entries.clear();
+        ThreadPoolsFactory.runClosureInThread(this.groupId, done, new Status(RaftError.EIO, "Corrupted LogStorage"));
+        return;
+    }
+    boolean doUnlock = true;
+    this.writeLock.lock();
+    try {
+        if (!entries.isEmpty() && !checkAndResolveConflict(entries, done, this.writeLock)) {
+            // If checkAndResolveConflict returns false, the done will be called in it.
+            entries.clear();
+            return;
+        }
+        for (int i = 0; i < entries.size(); i++) {
+            final LogEntry entry = entries.get(i);
+            // Set checksum after checkAndResolveConflict
+            if (this.raftOptions.isEnableLogEntryChecksum()) {
+                entry.setChecksum(entry.checksum());
+            }
+            if (entry.getType() == EntryType.ENTRY_TYPE_CONFIGURATION) {
+                Configuration oldConf = new Configuration();
+                if (entry.getOldPeers() != null) {
+                    oldConf = new Configuration(entry.getOldPeers(), entry.getOldLearners());
+                }
+                final ConfigurationEntry conf = new ConfigurationEntry(entry.getId(), new Configuration(entry.getPeers(), entry.getLearners()), oldConf);
+                this.configManager.add(conf);
+            }
+        }
+        if (!entries.isEmpty()) {
+            done.setFirstLogIndex(entries.get(0).getId().getIndex());
+            this.logsInMemory.addAll(entries);
+        }
+        done.setEntries(entries);
+        doUnlock = false;
+        if (!wakeupAllWaiter(this.writeLock)) {
+            notifyLastLogIndexListeners();
+        }
+        // publish event out of lock
+        this.diskQueue.publishEvent((event, sequence) -> {
+            event.reset();
+            event.type = EventType.OTHER;
+            event.done = done;
+        });
+    } finally {
+        if (doUnlock) {
+            this.writeLock.unlock();
+        }
+    }
+}]]],
