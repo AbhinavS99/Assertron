@@ -15,13 +15,13 @@ def genNaiveAssert():
     message = main(code, codeExtension)
     print(message)
     response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "system", "content": ""},
-                          {"role": "user", "content": message}],
-                temperature=0,
-                max_tokens=1023,
-                presence_penalty=-0.5,
-                n=1)
+               model="gpt-3.5-turbo",
+               messages=[{"role": "system", "content": ""},
+                         {"role": "user", "content": message}],
+               temperature=0,
+               max_tokens=1023,
+               presence_penalty=-0.5,
+               n=1)
     op = response.choices[0].message.content
     return op
 
