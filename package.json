@@ -19,12 +19,22 @@
       {
         "command": "assertron.generateNaiveAssert",
         "category": "Assertron",
-        "title": "Generate Naive Assertions"
+        "title": "Generate Prompt Assertions"
       },
       {
         "command": "assertron.generateFewShotAssert",
         "category": "Assertron",
-        "title": "Generate Few Shot Assertions"
+        "title": "Generate Boost Assertions"
+      },
+      {
+        "command": "assertron.mergeAssertion",
+        "category": "Assertron",
+        "title": "Merge Selected Assertions"
+      },
+      {
+        "command": "assertron.discardAssertion",
+        "category": "Assertron",
+        "title": "Discard Selected Assertions"
       }
     ],
     "menus": {
